@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" type="image/png" href="./favicon-admin.png" />
+    <link rel="apple-touch-icon" href="./favicon-admin.png" />
+    <title>لوحة التحكم - الجدول الذكي</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .glass-panel { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
+        .tab-btn.active { color: #4f46e5; border-bottom: 2px solid #4f46e5; font-weight: 800; }
+        .tab-btn { color: #64748b; font-weight: 700; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="min-h-screen items-center justify-center p-4">
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
+        <i class='bx bx-loader-alt bx-spin text-5xl mb-4'></i>
+        <p class="font-bold">جاري التحميل...</p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="max-w-md w-full mx-auto mt-20 glass-panel shadow-2xl rounded-3xl p-8 transform transition-all">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class='bx bxs-lock-alt text-3xl'></i>
+            </div>
+            <h1 class="text-2xl font-black text-slate-800">لوحة تحكم الإدارة</h1>
+            <p class="text-sm font-bold text-slate-500 mt-2">قم بتسجيل الدخول للوصول لقاعدة البيانات</p>
+        </div>
+        
+        <form id="login-form" class="space-y-5">
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">البريد الإلكتروني</label>
+                <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="admin@example.com">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">كلمة المرور</label>
+                <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="••••••••">
+            </div>
+            <p id="login-error" class="text-red-500 text-xs font-bold text-center hidden">بيانات الدخول غير صحيحة</p>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class='bx bx-log-in-circle text-xl'></i> تسجيل الدخول
+            </button>
+        </form>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" class="max-w-6xl w-full mx-auto hidden mt-6">
+        
+        <!-- Header -->
+        <header class="glass-panel shadow-sm rounded-2xl p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg"><i class='bx bx-slider-alt text-2xl'></i></div>
+                <div>
+                    <h1 class="text-xl font-black text-slate-800">إدارة النظام الجامعي</h1>
+                    <p class="text-sm font-bold text-slate-500">تحكم كامل في المحاضرات، الإعلانات، والمهام</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="user-display" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hidden sm:inline-block"></span>
+                <button id="logout-btn" class="bg-white hover:bg-red-50 text-red-600 font-bold py-2.5 px-4 rounded-xl flex gap-2 transition-all border border-red-200">
+                    <i class='bx bx-log-out'></i> خروج
+                </button>
+            </div>
+        </header>
+
+        <!-- Tabs Navigation -->
+        <div class="glass-panel flex gap-8 px-6 mb-6 rounded-2xl shadow-sm overflow-x-auto hide-scrollbar">
+            <button class="tab-btn active py-4 transition-all whitespace-nowrap" onclick="switchTab('tab-schedule', this)">
+                <i class='bx bx-table'></i> إدارة المحاضرات
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap" onclick="switchTab('tab-announcements', this)">
+                <i class='bx bx-broadcast'></i> الإعلانات العاجلة
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap" onclick="switchTab('tab-tasks', this)">
+                <i class='bx bx-task'></i> المهام والتكليفات
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap text-amber-600 hover:text-amber-700" onclick="window.open('https://console.firebase.google.com/project/aviation-timetable-v4/messaging', '_blank')">
+                <i class='bx bxs-bell-ring'></i> إرسال إشعار
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap text-emerald-600 hover:text-emerald-700" onclick="switchTab('tab-visitors', this)">
+                <i class='bx bx-ghost'></i> الزوار 👻
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap text-blue-600 hover:text-blue-700" onclick="switchTab('tab-materials', this)">
+                <i class='bx bx-folder-open'></i> ملفات المواد 📂
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap text-rose-600 hover:text-rose-700" onclick="switchTab('tab-exams', this)">
+                <i class='bx bx-edit-alt'></i> جدول الامتحانات 📑
+            </button>
+            <button class="tab-btn py-4 transition-all whitespace-nowrap text-indigo-600 hover:text-indigo-700" onclick="switchTab('tab-chats', this)">
+                <i class='bx bx-message-rounded-dots'></i> المحادثات 💬
+            </button>
+        </div>
+
+        <!-- TAB 1: SCHEDULE -->
+        <div id="tab-schedule" class="tab-content active">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h2 class="text-lg font-black text-slate-800">جدول السكاشن والمحاضرات</h2>
+                <button onclick="openModal('modal-schedule')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class='bx bx-plus'></i> إضافة محاضرة
+                </button>
+            </div>
+            <div class="glass-panel shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                <div class="overflow-x-auto p-1">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-100 text-slate-600">
+                            <tr>
+                                <th class="p-4 font-black w-24">اليوم</th>
+                                <th class="p-4 font-black w-20">الفصل</th>
+                                <th class="p-4 font-black">المادة</th>
+                                <th class="p-4 font-black text-center w-28">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-table-body" class="divide-y divide-slate-100 text-slate-700 font-bold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ANNOUNCEMENTS -->
+        <div id="tab-announcements" class="tab-content">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h2 class="text-lg font-black text-slate-800">الإعلانات والرسائل العاجلة</h2>
+                <button onclick="openModal('modal-announcement')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class='bx bx-message-add'></i> إعلان جديد
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="announcements-container">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- TAB 3: TASKS -->
+        <div id="tab-tasks" class="tab-content">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h2 class="text-lg font-black text-slate-800">المهام (تظهر للجميع ولا يمكنهم حذفها)</h2>
+                <button onclick="openModal('modal-task')" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class='bx bx-list-plus'></i> مهمة جديدة
+                </button>
+            </div>
+            <div class="space-y-3" id="tasks-container">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- TAB 4: VISITORS -->
+        <div id="tab-visitors" class="tab-content">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class='bx bx-ghost text-emerald-500'></i> سجل الزوار</h2>
+                <div class="flex items-center gap-3">
+                    <span id="visitors-count" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-black">0 زيارة</span>
+                    <button onclick="clearAllVisitors()" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 px-4 rounded-xl flex items-center gap-2 text-sm transition border border-red-200">
+                        <i class='bx bx-trash'></i> مسح الكل
+                    </button>
+                </div>
+            </div>
+            <div id="visitors-container" class="space-y-3">
+                <div class="glass-panel p-8 rounded-2xl text-center text-slate-400 font-bold">
+                    <i class='bx bx-loader-alt bx-spin text-3xl mb-2'></i><br>انتقل لهذا التبويب لتحميل البيانات
+                </div>
+            </div>
+        </div>
+        
+        <!-- TAB 5: MATERIALS -->
+        <div id="tab-materials" class="tab-content">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h2 class="text-lg font-black text-slate-800">إدارة الملفات والمحاضرات المصورة</h2>
+                <button onclick="openModal('modal-material')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class='bx bx-plus'></i> إضافة ملف
+                </button>
+            </div>
+            <div id="materials-admin-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+        <!-- TAB 6: CHATS (Shadow Monitor) -->
+        <div id="tab-chats" class="tab-content">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <div class="flex flex-col">
+                    <h2 class="text-lg font-black text-slate-800">مراقبة محادثات الذكاء الاصطناعي</h2>
+                    <p class="text-xs font-bold text-slate-400">سجل حي لكل ما يدور بين الطلاب و "شات المساعد الذكي"</p>
+                </div>
+            </div>
+            <div id="chats-container" class="space-y-4">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- TAB 7: EXAMS -->
+        <div id="tab-exams" class="tab-content">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h2 class="text-lg font-black text-slate-800">إدارة جدول الامتحانات</h2>
+                <button onclick="openModal('modal-exams')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class='bx bx-plus-circle'></i> إضافة امتحان
+                </button>
+            </div>
+            <div class="glass-panel shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                <div class="overflow-x-auto p-1">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-100 text-slate-600">
+                            <tr>
+                                <th class="p-4 font-black">المادة</th>
+                                <th class="p-4 font-black">التاريخ</th>
+                                <th class="p-4 font-black">الوقت</th>
+                                <th class="p-4 font-black">المكان</th>
+                                <th class="p-4 font-black text-center w-28">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exams-table-body" class="divide-y divide-slate-100 text-slate-700 font-bold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <!-- 1. Schedule Modal -->
+    <div id="modal-schedule" onclick="if(event.target === this) closeModals()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 hidden">
+        <div class="glass-panel w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl transform transition-all scale-95 opacity-0">
+            <div class="bg-emerald-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-black text-lg" id="modal-schedule-title">إضافة محاضرة</h3>
+                <button onclick="closeModals()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center hover:bg-black/20"><i class='bx bx-x text-xl'></i></button>
+            </div>
+            <form id="form-schedule" class="p-6 space-y-4">
+                <input type="hidden" id="sch-id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">اليوم</label>
+                        <select id="sch-day" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"><option value="6">السبت</option><option value="0">الأحد</option><option value="1">الإثنين</option><option value="2">الثلاثاء</option><option value="3">الأربعاء</option><option value="4">الخميس</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">الفصل</label>
+                        <select id="sch-period" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">المجموعة</label>
+                        <select id="sch-group" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"><option value="all">الكل</option><option value="m1">م1</option><option value="m2">م2</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
+                        <select id="sch-type" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"><option value="محاضرة">محاضرة</option><option value="سكشن">سكشن</option><option value="عملي">عملي</option><option value="-">فراغ</option></select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">المادة</label>
+                    <input type="text" id="sch-sub" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">المكان</label><input type="text" id="sch-room" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"></div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">اللون</label>
+                         <select id="sch-theme" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"><option value="os">OS (أزرق)</option><option value="arch">Arch (برتقالي)</option><option value="db">DB (وردي)</option><option value="counters">Counters (سماوي)</option><option value="aviation">Aviation (بنفسجي)</option><option value="atc">ATC (أخضر)</option><option value="other">Other (رمادي)</option></select>
+                    </div>
+                </div>
+                <div><label class="block text-xs font-bold text-slate-500 mb-1">الدكتور/المعيد</label><input type="text" id="sch-prof" required class="w-full p-2 rounded-lg border bg-slate-50 font-bold"></div>
+                <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl mt-4">حفظ المحاضرة</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Announcement Modal -->
+    <div id="modal-announcement" onclick="if(event.target === this) closeModals()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 hidden">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden shadow-2xl transform transition-all scale-95 opacity-0">
+            <div class="bg-amber-500 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-black text-lg">نشر إعلان عاجل</h3>
+                <button onclick="closeModals()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center"><i class='bx bx-x text-xl'></i></button>
+            </div>
+            <form id="form-announcement" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">عنوان الإعلان</label>
+                    <input type="text" id="ann-title" required placeholder="مثال: تغيير قاعة" class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">التفاصيل</label>
+                    <textarea id="ann-body" required rows="3" placeholder="اكتب رسالتك هنا..." class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-amber-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">النوع (اللون)</label>
+                    <select id="ann-type" class="w-full p-3 rounded-xl border bg-slate-50 font-bold">
+                        <option value="info">عادي (أزرق)</option>
+                        <option value="warning">مهم (برتقالي)</option>
+                        <option value="urgent">عاجل (أحمر)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-lg mt-2">نشر الآن <i class='bx bx-send'></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Task Modal -->
+    <div id="modal-task" onclick="if(event.target === this) closeModals()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 hidden">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden shadow-2xl transform transition-all scale-95 opacity-0">
+            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-black text-lg">إضافة مهمة للجميع</h3>
+                <button onclick="closeModals()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center"><i class='bx bx-x text-xl'></i></button>
+            </div>
+            <form id="form-task" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">نص المهمة</label>
+                    <input type="text" id="tsk-text" required placeholder="مثال: تسليم شيت معمارية الحاسب" class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg mt-2">إضافة المهمة <i class='bx bx-plus'></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Material Modal -->
+    <div id="modal-material" onclick="if(event.target === this) closeModals()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 hidden">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden shadow-2xl transform transition-all scale-95 opacity-0">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-black text-lg">إضافة ملف للمادة</h3>
+                <button onclick="closeModals()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center hover:bg-black/20"><i class='bx bx-x text-xl'></i></button>
+            </div>
+            <form id="form-material" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">اسم الملف / المحاضرة</label>
+                    <input type="text" id="mat-title" required placeholder="مثال: محاضرة 1 - مقدمة" class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">رابط الملف (Google Drive/YouTube)</label>
+                    <input type="url" id="mat-url" required placeholder="https://..." class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">المادة</label>
+                        <select id="mat-subject" required class="w-full p-3 rounded-xl border bg-slate-50 font-bold"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
+                        <select id="mat-type" required class="w-full p-3 rounded-xl border bg-slate-50 font-bold">
+                            <option value="pdf">PDF</option>
+                            <option value="ppt">PowerPoint</option>
+                            <option value="link">رابط خارجي</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg mt-2">إضافة الملف <i class='bx bx-plus'></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Exams Modal -->
+    <div id="modal-exams" onclick="if(event.target === this) closeModals()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 hidden">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden shadow-2xl transform transition-all scale-95 opacity-0">
+            <div class="bg-rose-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-black text-lg">إضافة امتحان جديد</h3>
+                <button onclick="closeModals()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center hover:bg-black/20"><i class='bx bx-x text-xl'></i></button>
+            </div>
+            <form id="form-exams" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">المادة</label>
+                    <input type="text" id="ex-subject" required placeholder="مثال: Operating Systems" class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-rose-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">التاريخ</label>
+                        <input type="date" id="ex-date" required class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-rose-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">الوقت</label>
+                        <input type="text" id="ex-time" required placeholder="مثال: 09:00 ص - 11:00 ص" class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-rose-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">المكان</label>
+                    <input type="text" id="ex-room" required placeholder="مثال: مدرج 2" class="w-full p-3 rounded-xl border bg-slate-50 font-bold outline-none focus:border-rose-500">
+                </div>
+                <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-lg mt-2">إضافة الامتحان <i class='bx bx-plus'></i></button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2 transform -translate-y-20 transition-all z-[100] opacity-0"><i class='bx bx-check-circle text-xl'></i> <span id="toast-msg">نجاح</span></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyARuej7Qhj538EwO5W6PvN7Sit5XNp4BXc",
+            authDomain: "aviation-timetable-v4.firebaseapp.com",
+            projectId: "aviation-timetable-v4",
+            storageBucket: "aviation-timetable-v4.firebasestorage.app",
+            messagingSenderId: "934776767589",
+            appId: "1:934776767589:web:d849f9bb8dd2ac654e328c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Data Store
+        let liveSchedule = [];
+        let examsUnsub = null;
+        let visitorsUnsub = null;
+        let materialsUnsub = null;
+        let chatsUnsub = null;
+
+        // UI Helpers
+        window.switchTab = (tabId, btn) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            // Contextual loading
+            if (tabId === 'tab-visitors') loadVisitors();
+            if (tabId === 'tab-materials') loadMaterialsAdmin();
+            if (tabId === 'tab-chats') loadChatsAdmin();
+            if (tabId === 'tab-exams') loadExamsAdmin();
+        };
+
+        window.openModal = (modalId) => {
+            const m = document.getElementById(modalId);
+            if(modalId === 'modal-schedule' && !document.getElementById('sch-id').value) document.getElementById('form-schedule').reset();
+            m.classList.remove('hidden');
+            setTimeout(() => { m.children[0].classList.remove('scale-95', 'opacity-0'); }, 10);
+        };
+
+        window.closeModals = () => {
+            document.querySelectorAll('[id^="modal-"] form').forEach(f => f?.reset());
+            document.getElementById('sch-id').value = '';
+            document.querySelectorAll('[id^="modal-"]').forEach(m => {
+                if (m.children[0]) m.children[0].classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { m.classList.add('hidden'); }, 300);
+            });
+        };
+
+        window.showToast = (msg, isError = false) => {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2 transform transition-all z-[100] ${isError ? 'bg-red-500' : 'bg-emerald-500'} text-white`;
+            setTimeout(() => { t.classList.remove('-translate-y-20', 'opacity-0'); }, 10);
+            setTimeout(() => { t.classList.add('-translate-y-20', 'opacity-0'); }, 2000);
+        };
+
+        // Auth
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('dashboard-screen').classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email;
+                fetchSchedule();
+                setupLiveListeners();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('dashboard-screen').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('loader').style.display='flex';
+            const [em, pwd] = [document.getElementById('email').value, document.getElementById('password').value];
+            try { await signInWithEmailAndPassword(auth, em, pwd); } catch (e) { document.getElementById('login-error').classList.remove('hidden'); }
+            document.getElementById('loader').style.display='none';
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+        // -- Schedule (Tab 1) --
+        async function fetchSchedule() {
+            try {
+                const snapshot = await getDocs(collection(db, "schedule"));
+                liveSchedule = [];
+                snapshot.forEach(doc => liveSchedule.push({ id: doc.id, ...doc.data() }));
+                liveSchedule.sort((a,b) => a.day !== b.day ? a.day - b.day : a.period - b.period);
+                renderScheduleTable();
+            } catch(e) { window.showToast("خطأ في جلب المحاضرات", true); }
+        }
+
+        const getDayName = (d) => ({ 6:"السبت", 0:"الأحد", 1:"الإثنين", 2:"الثلاثاء", 3:"الأربعاء", 4:"الخميس" })[d] || d;
+
+        function renderScheduleTable() {
+            const tbody = document.getElementById('schedule-table-body');
+            tbody.innerHTML = '';
+            liveSchedule.forEach(item => {
+                const badge = item.group === 'all' ? '<span class="bg-slate-200 px-2 rounded">الكل</span>' : item.group === 'm1' ? '<span class="bg-amber-100 text-amber-700 px-2 rounded">م1</span>' : '<span class="bg-purple-100 text-purple-700 px-2 rounded">م2</span>';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition group">
+                        <td class="p-4">${getDayName(item.day)}</td>
+                        <td class="p-4">الفترة ${item.period}</td>
+                        <td class="p-4 font-black text-indigo-700">${item.sub}</td>
+                        <td class="p-4 text-center">
+                            <button class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" onclick="editSchedule('${item.id}')"><i class='bx bx-edit-alt'></i></button>
+                            <button class="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white" onclick="delDoc('schedule','${item.id}')"><i class='bx bx-trash'></i></button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        window.editSchedule = (id) => {
+            const i = liveSchedule.find(x => x.id === id);
+            document.getElementById('sch-id').value = i.id;
+            ['day','period','group','type','sub','room','theme','prof'].forEach(k => document.getElementById('sch-'+k).value = i[k]);
+            document.getElementById('modal-schedule-title').innerText = 'تعديل المحاضرة';
+            window.openModal('modal-schedule');
+        };
+
+        document.getElementById('form-schedule').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {};
+            ['day','period','group','type','sub','room','theme','prof'].forEach(k => {
+                let v = document.getElementById('sch-'+k).value;
+                data[k] = (k==='day' || k==='period') ? parseInt(v) : v;
+            });
+            const id = document.getElementById('sch-id').value;
+            try {
+                if(id) await updateDoc(doc(db, "schedule", id), data);
+                else await addDoc(collection(db, "schedule"), data);
+                window.closeModals(); window.showToast("تم حفظ المحاضرة"); fetchSchedule();
+            } catch(e) { window.showToast("خطأ", true); }
+        });
+
+        // -- Global Listeners (Live Updates for Tab 2 & 3) --
+        function setupLiveListeners() {
+            // Announcements
+            onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc")), (snap) => {
+                const c = document.getElementById('announcements-container');
+                c.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const color = d.type==='urgent' ? 'red' : d.type==='warning' ? 'orange' : 'blue';
+                    c.innerHTML += `
+                        <div class="glass-panel p-5 rounded-2xl border-r-4 border-${color}-500 relative group">
+                            <button onclick="delDoc('announcements','${doc.id}')" class="absolute top-3 left-3 w-8 h-8 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 flex items-center justify-center transition"><i class='bx bx-trash'></i></button>
+                            <div class="flex items-center gap-2 mb-2"><i class='bx bxs-bell-ring text-${color}-500 text-xl'></i><h3 class="font-black text-slate-800">${d.title}</h3></div>
+                            <p class="text-sm font-bold opacity-80">${d.body}</p>
+                        </div>`;
+                });
+            });
+
+            // Tasks
+            onSnapshot(query(collection(db, "globalTasks"), orderBy("createdAt", "desc")), (snap) => {
+                const c = document.getElementById('tasks-container');
+                c.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    c.innerHTML += `
+                        <div class="glass-panel p-4 rounded-xl flex justify-between items-center group shadow-sm border border-slate-200">
+                            <div class="flex items-center gap-3"><div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center"><i class='bx bx-check-double text-xl'></i></div><span class="font-black text-slate-700">${d.text}</span></div>
+                            <button onclick="delDoc('globalTasks','${doc.id}')" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition opacity-0 group-hover:opacity-100"><i class='bx bx-trash'></i></button>
+                        </div>`;
+                });
+            });
+        }
+
+        // Add Announcement
+        document.getElementById('form-announcement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await addDoc(collection(db, "announcements"), {
+                    title: document.getElementById('ann-title').value,
+                    body: document.getElementById('ann-body').value,
+                    type: document.getElementById('ann-type').value,
+                    createdAt: serverTimestamp()
+                });
+                window.closeModals(); window.showToast("تم نشر الإعلان");
+            } catch(e) { window.showToast("خطأ", true); }
+        });
+
+        // Add Task
+        document.getElementById('form-task').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await addDoc(collection(db, "globalTasks"), {
+                    text: document.getElementById('tsk-text').value,
+                    createdAt: serverTimestamp()
+                });
+                window.closeModals(); window.showToast("تم إضافة المهمة للجميع");
+            } catch(e) { window.showToast("خطأ", true); }
+        });
+
+        // -- Exams (Tab 7) --
+        window.loadExamsAdmin = () => {
+            if (typeof examsUnsub === 'function') examsUnsub();
+            examsUnsub = onSnapshot(query(collection(db, "exams"), orderBy("date", "asc")), (snap) => {
+                const tbody = document.getElementById('exams-table-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="p-4">${d.subject}</td>
+                            <td class="p-4 text-rose-600">${d.date}</td>
+                            <td class="p-4 text-slate-500 font-medium">${d.time}</td>
+                            <td class="p-4"><span class="bg-slate-100 px-2 py-1 rounded text-xs">${d.room}</span></td>
+                            <td class="p-4 text-center">
+                                <button onclick="delDoc('exams','${doc.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition mx-auto"><i class='bx bx-trash'></i></button>
+                            </td>
+                        </tr>`;
+                });
+            });
+        };
+
+        const exForm = document.getElementById('form-exams');
+        if (exForm) {
+            exForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    await addDoc(collection(db, "exams"), {
+                        subject: document.getElementById('ex-subject').value,
+                        date: document.getElementById('ex-date').value,
+                        time: document.getElementById('ex-time').value,
+                        room: document.getElementById('ex-room').value,
+                        createdAt: serverTimestamp()
+                    });
+                    window.closeModals(); window.showToast("تم إضافة الامتحان بنجاح ✅");
+                    exForm.reset();
+                } catch(e) { window.showToast("خطأ في الإضافة", true); }
+            });
+        }
+        // Universal Delete Function
+        window.delDoc = async (col, id) => {
+            if(!confirm("احذف؟")) return;
+            try { await deleteDoc(doc(db, col, id)); window.showToast("تم الحذف"); if(col==='schedule') fetchSchedule(); } catch(e) { window.showToast("خطأ في الحذف", true); }
+        }
+
+        // -- Visitors Tab (Ghost Tracker) --
+        async function loadVisitors() {
+            const container = document.getElementById('visitors-container');
+            const countEl = document.getElementById('visitors-count');
+            container.innerHTML = `<div class="glass-panel p-8 rounded-2xl text-center text-slate-400 font-bold"><i class='bx bx-loader-alt bx-spin text-3xl mb-2'></i><br>جاري التحميل...</div>`;
+
+            if (typeof visitorsUnsub === 'function') visitorsUnsub();
+            visitorsUnsub = onSnapshot(query(collection(db, 'visitors'), orderBy('timestamp', 'desc')), (snap) => {
+                countEl.innerText = snap.size + ' زيارة';
+                if (snap.empty) {
+                    container.innerHTML = `<div class="glass-panel p-8 rounded-2xl text-center text-slate-400 font-bold">لا يوجد زوار بعد</div>`;
+                    return;
+                }
+                container.innerHTML = '';
+                snap.forEach(d => {
+                    const v = d.data();
+                    const mobile = v.isMobile ? '📱 موبايل' : '💻 كمبيوتر';
+                    const campusBadge = v.onCampus === true
+                        ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-full">🎓 على الحرم</span>`
+                        : v.onCampus === false
+                        ? `<span class="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-full">🏠 خارج (${v.distanceFromCampus || '?'}م)</span>`
+                        : `<span class="bg-yellow-100 text-yellow-600 text-[10px] font-black px-2 py-0.5 rounded-full">📍 لم يشارك الموقع</span>`;
+
+                    const savedName = v.taggedName || '';
+                    const nameDisplay = savedName
+                        ? `<span class="font-black text-indigo-700 text-sm">${savedName}</span>`
+                        : `<span class="font-bold text-slate-400 text-xs italic">بدون اسم</span>`;
+
+                    container.innerHTML += `
+                        <div class="glass-panel p-4 rounded-2xl border border-slate-200 shadow-sm relative group">
+                            <button onclick="delDoc('visitors','${d.id}')" class="absolute top-3 left-3 w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class='bx bx-x'></i></button>
+
+                            <!-- Name Tag Row -->
+                            <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                        <i class='bx bx-user text-indigo-500 text-lg'></i>
+                                    </div>
+                                    <div>${nameDisplay}</div>
+                                    ${campusBadge}
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" id="name-${d.id}" placeholder="سمّ هذا الزائر..." value="${savedName}"
+                                        class="text-xs bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 font-bold outline-none focus:border-indigo-400 w-40">
+                                    <button onclick="saveVisitorName('${d.id}')"
+                                        class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                        حفظ
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Data Grid -->
+                            <div class="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-3">
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">الوقت</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.localTime || v.timestamp || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">الجهاز</p>
+                                    <p class="font-bold text-xs text-slate-700">${mobile} · ${v.platform || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">العنوان IP</p>
+                                    <p class="font-bold text-xs text-emerald-700">${v.ip || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">الموقع</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.city || '—'}, ${v.country || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">مزود الإنترنت</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.isp || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">البطارية</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.battery || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">الشاشة</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.screenW}×${v.screenH} @${v.pixelRatio}x</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">المعالج / الذاكرة</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.cpuCores || '?'} أنوية · ${v.memory || '?'}GB RAM</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">المنطقة الزمنية</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.timezone || '—'}</p>
+                                </div>
+                                ${v.distanceFromCampus !== undefined ? `<div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">المسافة عن الحرم</p>
+                                    <p class="font-bold text-xs text-slate-700">${v.distanceFromCampus}م · دقة ${v.gpsAccuracy}م</p>
+                                </div>` : ''}
+                            </div>
+                            <details class="mt-3">
+                                <summary class="text-[10px] font-black text-slate-400 cursor-pointer uppercase">الهوية + User Agent</summary>
+                                <p class="text-[10px] font-mono text-slate-500 mt-1 break-all">${v.visitorId || '—'}</p>
+                                <p class="text-[10px] font-mono text-slate-500 mt-1 break-all">${v.userAgent || '—'}</p>
+                            </details>
+                        </div>`;
+                });
+            });
+        }
+
+        window.saveVisitorName = async (docId) => {
+            const input = document.getElementById('name-' + docId);
+            if (!input) return;
+            const name = input.value.trim();
+            if (!name) return;
+            try {
+                await updateDoc(doc(db, 'visitors', docId), { taggedName: name });
+                window.showToast('تم حفظ الاسم: ' + name);
+            } catch(e) { window.showToast('خطأ في الحفظ', true); }
+        };
+        window.clearAllVisitors = async () => {
+            if (!confirm('مسح جميع سجلات الزوار؟')) return;
+            const snap = await getDocs(collection(db, 'visitors'));
+            const deletes = snap.docs.map(d => deleteDoc(doc(db, 'visitors', d.id)));
+            await Promise.all(deletes);
+            window.showToast('تم مسح جميع الزوار');
+        };
+
+        // -- Materials (Tab 5) --
+        window.loadMaterialsAdmin = () => {
+            if (typeof materialsUnsub === 'function') materialsUnsub();
+            materialsUnsub = onSnapshot(query(collection(db, "materials"), orderBy("createdAt", "desc")), (snap) => {
+                const c = document.getElementById('materials-admin-container');
+                if (!c) return;
+                c.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    c.innerHTML += `
+                        <div class="glass-panel p-4 rounded-xl flex justify-between items-center group shadow-sm border border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class='bx bx-file text-xl'></i></div>
+                                <div>
+                                    <p class="font-black text-slate-700 text-sm">${d.title}</p>
+                                    <p class="text-[10px] font-bold text-slate-400">${d.subject} • ${d.type}</p>
+                                </div>
+                            </div>
+                            <button onclick="delDoc('materials','${doc.id}')" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition opacity-0 group-hover:opacity-100"><i class='bx bx-trash'></i></button>
+                        </div>`;
+                });
+            });
+
+            // Populate subjects dropdown
+            const subjects = [...new Set(liveSchedule.map(s => s.sub))];
+            const select = document.getElementById('mat-subject');
+            if (select) select.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+        };
+
+        const matForm = document.getElementById('form-material');
+        if (matForm) {
+            matForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    await addDoc(collection(db, "materials"), {
+                        title: document.getElementById('mat-title').value,
+                        url: document.getElementById('mat-url').value,
+                        subject: document.getElementById('mat-subject').value,
+                        type: document.getElementById('mat-type').value,
+                        createdAt: serverTimestamp()
+                    });
+                    window.closeModals(); window.showToast("تم إضافة الملف بنجاح ✅");
+                    matForm.reset();
+                } catch(e) { window.showToast("خطأ في الإضافة", true); }
+            });
+        }
+        // -- Chat Monitor (Shadow Logging) --
+        function loadChatsAdmin() {
+            const container = document.getElementById('chats-container');
+            container.innerHTML = `<div class="glass-panel p-8 rounded-2xl text-center text-slate-400 font-bold"><i class='bx bx-loader-alt bx-spin text-3xl mb-2'></i><br>جاري تحميل السجلات...</div>`;
+
+            if (typeof chatsUnsub === 'function') chatsUnsub();
+            chatsUnsub = onSnapshot(query(collection(db, 'chat_logs'), orderBy('timestamp', 'desc')), (snap) => {
+                if (snap.empty) {
+                    container.innerHTML = `<div class="glass-panel p-8 rounded-2xl text-center text-slate-400 font-bold">لم تحدث أي محادثات بعد</div>`;
+                    return;
+                }
+                container.innerHTML = '';
+                snap.forEach(d => {
+                    const c = d.data();
+                    const time = c.timestamp ? c.timestamp.toDate().toLocaleString('ar-EG') : '—';
+                    
+                    container.innerHTML += `
+                        <div class="glass-panel p-6 rounded-2xl border border-slate-200 shadow-sm relative group overflow-hidden">
+                            <div class="absolute top-0 right-0 w-1.5 h-full bg-indigo-500"></div>
+                            <button onclick="delDoc('chat_logs','${d.id}')" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class='bx bx-trash'></i></button>
+
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500"><i class='bx bx-user-voice text-2xl'></i></div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-black text-slate-400">زائر ID: <span class="text-indigo-600">${c.visitorId}</span></p>
+                                    <p class="text-[10px] font-bold text-slate-400">${time}</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                                    <p class="text-[10px] uppercase font-black text-indigo-400 mb-2 flex items-center gap-1"><i class='bx bx-message-alt-detail'></i> سؤال الطالب:</p>
+                                    <p class="text-sm font-bold text-slate-800 leading-relaxed">${c.userMessage}</p>
+                                </div>
+                                <div class="bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100">
+                                    <p class="text-[10px] uppercase font-black text-emerald-500 mb-2 flex items-center gap-1"><i class='bx bx-bot'></i> رد الذكاء الاصطناعي:</p>
+                                    <p class="text-sm font-bold text-slate-700 leading-relaxed opacity-80">${c.aiResponse}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

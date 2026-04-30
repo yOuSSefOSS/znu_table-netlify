@@ -1,0 +1,2428 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+
+    <!-- PWA Setup tags -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <title>جدول المحاضرات الذكي - الطيران</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+
+    <script>
+      if (
+        localStorage.getItem("theme") === "dark" ||
+        (!("theme" in localStorage) &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Cairo", "sans-serif"] },
+            colors: {
+              primary: "#4f46e5",
+              primaryDark: "#3730a3",
+            },
+            animation: {
+              "fade-in": "fadeIn 0.5s ease-out forwards",
+              "slide-up": "slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+            keyframes: {
+              fadeIn: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
+              slideUp: {
+                "0%": { opacity: "0", transform: "translateY(20px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        -webkit-tap-highlight-color: transparent;
+        scroll-behavior: smooth;
+      }
+
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      .subject-card {
+        transition:
+          transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+          box-shadow 0.2s ease;
+      }
+
+      .subject-card:active {
+        transform: scale(0.97);
+      }
+
+        /* --- V3 THEME ENGINE 2.0 (Environments) --- */
+        :root {
+            --app-bg: #f8fafc;
+            --text-main: #334155;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --header-bg: rgba(248, 250, 252, 0.8);
+            --accent: #4f46e5;
+            --glass-blur: 12px;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --nav-bg: rgba(255, 255, 255, 0.8);
+            --header-text: #1e293b;
+            --badge-bg: rgba(0,0,0,0.05);
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        /* 1. Cockpit (Aviation HUD) */
+        .theme-cockpit {
+            --app-bg: #04110c;
+            --text-main: #d1fae5;
+            --card-bg: rgba(8, 30, 22, 0.72);
+            --header-bg: rgba(3, 19, 13, 0.88);
+            --accent: #f59e0b;
+            --glass-blur: 10px;
+            --border-color: rgba(16, 185, 129, 0.35);
+            --nav-bg: rgba(4, 20, 14, 0.92);
+            --header-text: #34d399;
+            --badge-bg: rgba(16, 185, 129, 0.16);
+            --card-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+        }
+        .theme-cockpit #bg-pattern {
+            background-image: linear-gradient(rgba(34, 197, 94, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 197, 94, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* 2. Glass (Clean Frosted) */
+        .theme-glass {
+            --app-bg: #eaf1fb;
+            --text-main: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.58);
+            --header-bg: rgba(255, 255, 255, 0.72);
+            --accent: #4f46e5;
+            --glass-blur: 22px;
+            --border-color: rgba(148, 163, 184, 0.28);
+            --nav-bg: rgba(255, 255, 255, 0.75);
+            --header-text: #0f172a;
+            --badge-bg: rgba(99, 102, 241, 0.12);
+            --card-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+        .theme-glass #bg-pattern {
+             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+             opacity: 0.05;
+        }
+
+        /* 3. Cyber (Neon Night) */
+        .theme-cyber {
+            --app-bg: #0b1020;
+            --text-main: #dbeafe;
+            --card-bg: rgba(15, 23, 42, 0.72);
+            --header-bg: rgba(2, 6, 23, 0.9);
+            --accent: #22d3ee;
+            --glass-blur: 14px;
+            --border-color: rgba(56, 189, 248, 0.34);
+            --nav-bg: rgba(2, 6, 23, 0.92);
+            --header-text: #67e8f9;
+            --badge-bg: rgba(34, 211, 238, 0.14);
+            --card-shadow: 0 10px 26px rgba(34, 211, 238, 0.18);
+        }
+        .theme-cyber #bg-pattern {
+            background: linear-gradient(transparent 0%, rgba(255, 0, 255, 0.03) 50%, transparent 100%), linear-gradient(90deg, transparent 0%, rgba(0, 242, 255, 0.03) 50%, transparent 100%);
+            background-size: 100% 4px, 4px 100%;
+        }
+
+        /* 4. Pastel (Soft Pink) */
+        .theme-pastel {
+            --app-bg: #fff1f6;
+            --text-main: #831843;
+            --card-bg: rgba(255, 255, 255, 0.65);
+            --header-bg: rgba(255, 241, 246, 0.9);
+            --accent: #ec4899;
+            --glass-blur: 16px;
+            --border-color: rgba(244, 114, 182, 0.28);
+            --nav-bg: rgba(255, 241, 246, 0.92);
+            --header-text: #be185d;
+            --badge-bg: rgba(236, 72, 153, 0.14);
+            --card-shadow: 0 10px 24px rgba(236, 72, 153, 0.16);
+        }
+        .theme-pastel #bg-pattern {
+            background-image: radial-gradient(#fb7185 0.8px, transparent 0.8px);
+            background-size: 24px 24px;
+            opacity: 0.3;
+        }
+
+        /* 5. Rose (Lilac Purple) */
+        .theme-rose {
+            --app-bg: #f5f3ff;
+            --text-main: #3b0764;
+            --card-bg: rgba(255, 255, 255, 0.66);
+            --header-bg: rgba(245, 243, 255, 0.9);
+            --accent: #8b5cf6;
+            --glass-blur: 18px;
+            --border-color: rgba(167, 139, 250, 0.3);
+            --nav-bg: rgba(245, 243, 255, 0.92);
+            --header-text: #6d28d9;
+            --badge-bg: rgba(139, 92, 246, 0.15);
+            --card-shadow: 0 10px 24px rgba(139, 92, 246, 0.16);
+        }
+        .theme-rose #bg-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        body {
+            background-color: var(--app-bg);
+            color: var(--text-main);
+            transition: background 0.5s ease, color 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        #bg-mesh {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0.6;
+            filter: blur(100px);
+            transition: opacity 0.5s;
+        }
+
+        #bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .mesh-blob {
+            position: absolute;
+            border-radius: 50%;
+            transition: background 1.5s ease;
+        }
+
+        #bg-emojis {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            padding: 20px;
+        }
+
+        .emoji-item {
+            font-size: 2rem;
+            opacity: 0.25;
+            filter: grayscale(0.2);
+            transition: all 1s ease;
+            animation: float-emoji 20s infinite ease-in-out;
+            user-select: none;
+        }
+
+        @keyframes float-emoji {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+            25% { transform: translateY(-30px) translateX(15px) rotate(10deg); }
+            50% { transform: translateY(-10px) translateX(-20px) rotate(-10deg); }
+            75% { transform: translateY(-40px) translateX(20px) rotate(5deg); }
+        }
+      .theme-counters {
+        --th-main: #06b6d4;
+        --th-bg: #ecfeff;
+        --th-text: #0891b2;
+        --th-dark-bg: #164e63;
+        --th-dark-text: #67e8f9;
+      }
+
+      .theme-os {
+        --th-main: #3b82f6;
+        --th-bg: #eff6ff;
+        --th-text: #2563eb;
+        --th-dark-bg: #1e3a8a;
+        --th-dark-text: #93c5fd;
+      }
+
+      .theme-atc {
+        --th-main: #10b981;
+        --th-bg: #ecfdf5;
+        --th-text: #059669;
+        --th-dark-bg: #064e3b;
+        --th-dark-text: #6ee7b7;
+      }
+
+      .theme-aviation {
+        --th-main: #8b5cf6;
+        --th-bg: #f5f3ff;
+        --th-text: #7c3aed;
+        --th-dark-bg: #4c1d95;
+        --th-dark-text: #c4b5fd;
+      }
+
+      .theme-arch {
+        --th-main: #f59e0b;
+        --th-bg: #fffbeb;
+        --th-text: #d97706;
+        --th-dark-bg: #78350f;
+        --th-dark-text: #fcd34d;
+      }
+
+      .theme-db {
+        --th-main: #ec4899;
+        --th-bg: #fdf2f8;
+        --th-text: #db2777;
+        --th-dark-bg: #831843;
+        --th-dark-text: #f9a8d4;
+      }
+
+      .theme-other {
+        --th-main: #64748b;
+        --th-bg: #f8fafc;
+        --th-text: #475569;
+        --th-dark-bg: #334155;
+        --th-dark-text: #cbd5e1;
+      }
+
+        .theme-dynamic {
+            border-right: 4px solid var(--accent);
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            backdrop-filter: blur(var(--glass-blur));
+            box-shadow: var(--card-shadow);
+            border-color: var(--border-color);
+        }
+
+      .dark .theme-dynamic {
+        background-color: var(--th-dark-bg);
+        color: var(--th-dark-text);
+        border-right: 4px solid var(--th-main);
+      }
+
+      .grid-header {
+        font-size: 0.85rem;
+        font-weight: 800;
+        background: var(--primary);
+        color: white;
+        text-align: center;
+        padding: 12px 8px;
+      }
+
+      .grid-cell {
+        border-bottom: 1px dashed #e2e8f0;
+        border-left: 1px dashed #e2e8f0;
+        padding: 10px;
+        min-height: 120px;
+      }
+
+      .dark .grid-cell {
+        border-color: #334155;
+      }
+
+      .progress-bar-container {
+        width: 100%;
+        height: 6px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 12px;
+      }
+
+      .dark .progress-bar-container {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: var(--th-main);
+        width: 0%;
+        transition: width 1s linear;
+      }
+
+      /* --- Bottom Nav Enhancement --- */
+      .nav-btn {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        color: var(--text-main);
+        height: 100%;
+        width: 100%;
+      }
+      .nav-btn i {
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .nav-btn.active {
+        color: var(--accent) !important;
+        opacity: 1 !important;
+      }
+      .nav-btn.active i {
+        transform: translateY(-4px) scale(1.15);
+      }
+      .nav-btn .nav-dot {
+        width: 5px;
+        height: 5px;
+        background: var(--accent);
+        border-radius: 50%;
+        position: absolute;
+        bottom: 4px;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s ease;
+      }
+      .nav-btn.active .nav-dot {
+        opacity: 1;
+        transform: scale(1);
+      }
+      
+      #nav-assistant.active .bot-wrap {
+        transform: translateY(-4px) scale(1.1);
+        box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+      }
+      .bot-wrap {
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .mobile-pwa-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      .bottom-sheet {
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      }
+
+      .bottom-sheet.active {
+        transform: translateY(0);
+      }
+
+      .overlay {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(3px);
+      }
+
+      .overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .desktop-btn {
+        transition: all 0.2s;
+      }
+
+      .desktop-btn:hover {
+        background: #e2e8f0;
+      }
+
+      .dark .desktop-btn:hover {
+        background: #334155;
+      }
+
+      /* Toast Notifications */
+      #toast-container {
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+    </style>
+  </head>
+
+  <body class="theme-glass min-h-screen flex flex-col pt-0 pb-20 lg:pb-8">
+    <div id="bg-mesh">
+        <div class="mesh-blob w-[500px] h-[500px] top-[-10%] left-[-10%] bg-indigo-500/30 animate-pulse-slow"></div>
+        <div class="mesh-blob w-[600px] h-[600px] bottom-[-20%] right-[-10%] bg-cyan-500/20 animate-pulse" style="animation-duration: 4s;"></div>
+        <div class="mesh-blob w-[400px] h-[400px] top-[40%] left-[30%] bg-purple-500/20 animate-pulse-slow" style="animation-direction: reverse;"></div>
+    </div>
+    <div id="bg-pattern"></div>
+    <div id="bg-emojis"></div>
+
+    <!-- Toast Notifications Area -->
+    <div
+      id="toast-container"
+      class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"
+    ></div>
+
+    <!-- Header Section -->
+    <header
+      class="sticky top-0 z-40 bg-[var(--header-bg)] backdrop-blur-[var(--glass-blur)] border-b border-[var(--border-color)] shadow-sm transition-all duration-500"
+    >
+      <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <div
+          class="flex justify-between items-center text-[var(--header-text)]"
+        >
+          <div>
+            <h1
+              onclick="switchTab('schedule')"
+              class="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-l from-[var(--accent)] to-cyan-500 bg-clip-text text-transparent transition-all hover:opacity-80"
+            >
+              نظم معلومات الطيران
+            </h1>
+            <p
+              class="text-xs md:text-sm font-bold text-gray-500 dark:text-gray-400 mt-1"
+            >
+              المستوى الثاني - الفصل الدراسي الثاني 2026
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div
+              id="live-clock"
+              class="hidden sm:inline-flex px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold text-sm border border-indigo-100 dark:border-indigo-800/50"
+            >
+              --:--
+            </div>
+            <!-- Desktop Navbar Buttons -->
+            <button
+              onclick="switchTab('schedule')"
+              id="desktop-nav-schedule"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--accent)] text-white items-center justify-center desktop-btn transition shadow-md hover:ring-2 ring-[var(--accent)]"
+            >
+              <i class="bx bxs-calendar text-xl"></i>
+            </button>
+            <button
+              onclick="switchTab('tasks')"
+              id="desktop-nav-tasks"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+            >
+              <i class="bx bx-task text-xl"></i>
+              <span id="desktop-task-dot" class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 hidden"></span>
+            </button>
+            <button
+              onclick="switchTab('exams')"
+              id="desktop-nav-exams"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+            >
+              <i class="bx bx-edit-alt text-xl"></i>
+            </button>
+            <button
+              onclick="switchTab('settings')"
+              id="desktop-nav-settings"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center desktop-btn transition border border-gray-200 dark:border-slate-700 hover:ring-2 ring-indigo-500"
+            >
+              <i class="bx bx-slider-alt text-xl"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Day Tabs -->
+        <div
+          class="lg:hidden mt-4 pb-1 overflow-x-auto hide-scrollbar flex gap-2"
+          id="mobile-tabs-container"
+        >
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </header>
+
+    <!-- Announcements Bar -->
+    <div id="announcement-banner" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 hidden z-40 relative relative -mb-2"></div>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 sm:px-6 lg:px-8 mt-4">
+      <!-- WIDGET-STYLE BANNER -->
+      <div
+        id="current-class-banner"
+        class="mb-6 bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 rounded-[2.5rem] p-6 text-white shadow-2xl shadow-indigo-500/20 hidden animate-fade-in relative overflow-hidden border border-white/20"
+      >
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-24 h-24 bg-cyan-400/10 blur-[40px] rounded-full -translate-x-1/2 translate-y-1/2"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+          <div class="flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center animate-pulse-slow shadow-inner border border-white/10"
+            >
+              <i class="bx bx-time-five text-3xl"></i>
+            </div>
+            <div>
+              <h3 id="current-class-label" class="font-black text-[10px] uppercase tracking-widest opacity-70 mb-1">
+                المحاضرة الحالية
+              </h3>
+              <p id="current-class-title" class="font-black text-xl leading-tight">تحميل...</p>
+            </div>
+          </div>
+          <div class="text-left flex flex-col items-end">
+            <p
+              id="current-class-room"
+              class="font-black bg-white/20 px-3 py-1.5 rounded-xl text-xs inline-flex items-center gap-1.5 border border-white/10 backdrop-blur-sm"
+            >
+              <i class="bx bx-map"></i> <span></span>
+            </p>
+            <div
+              id="current-class-badge"
+              class="text-[10px] font-black bg-emerald-400 text-emerald-900 mt-2.5 px-3 py-1 rounded-full inline-block shadow-lg shadow-emerald-500/20"
+            >
+              جارية الآن
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Progress Bar for Widget -->
+        <div class="mt-6">
+            <div class="flex justify-between items-center mb-1.5 px-1">
+                <span class="text-[9px] font-black uppercase opacity-60">الوقت المنقضي</span>
+                <span id="widget-progress-text" class="text-[9px] font-black opacity-90">0%</span>
+            </div>
+            <div class="h-2.5 w-full bg-black/20 rounded-full overflow-hidden p-0.5 border border-white/5">
+                <div id="widget-progress-fill" class="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div id="up-next-mini" class="mt-4 pt-4 border-t border-white/10 flex items-center justify-between opacity-80">
+            <p class="text-[10px] font-bold flex items-center gap-1.5"><i class='bx bx-fast-forward'></i> التالي: <span id="up-next-name" class="font-black">لا يوجد</span></p>
+            <p id="up-next-time" class="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-lg">--:--</p>
+        </div>
+      </div>
+
+      <!-- SCHEDULE TAB CONTENT -->
+      <div id="tab-schedule" class="tab-content block">
+          <!-- MOBILE VIEW (Vertical List) -->
+          <div id="mobile-schedule-view" class="lg:hidden flex flex-col gap-4 pb-6">
+            <!-- Classes injected via JS -->
+          </div>
+
+          <!-- DESKTOP VIEW (Grid) -->
+          <div id="desktop-schedule-view"
+              class="hidden lg:block bg-[var(--card-bg)] backdrop-blur-[var(--glass-blur)] rounded-3xl shadow-xl shadow-indigo-500/5 border border-[var(--border-color)] overflow-hidden">
+              <div class="flex justify-between items-center p-6 border-b border-[var(--border-color)]">
+              <h2 class="font-black text-xl flex items-center gap-2">
+                <i class="bx bx-table text-indigo-500"></i> الجدول الأسبوعي
+              </h2>
+            </div>
+            <div class="overflow-x-auto w-full p-6">
+              <div id="desktop-grid-container" class="min-w-[900px]">
+                <!-- Table injected via JS -->
+              </div>
+            </div>
+            <div
+              class="bg-gray-50 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-700 p-4 text-sm font-bold text-gray-500 dark:text-gray-400 flex justify-between items-center"
+            >
+              <span>تحديث تلقائي للمحاضرات الجارية</span>
+              <span class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                النظام نشط
+              </span>
+            </div>
+          </div>
+      </div>
+
+      <!-- TASKS TAB CONTENT -->
+      <div id="tab-tasks" class="tab-content hidden h-full w-full max-w-3xl mx-auto pt-4 animate-fade-in pb-12">
+      </div>
+
+      <!-- SETTINGS TAB CONTENT -->
+      <div id="tab-settings" class="tab-content hidden h-full w-full max-w-3xl mx-auto pt-4 animate-fade-in pb-12">
+      </div>
+
+      <!-- MATERIALS TAB CONTENT -->
+      <div id="tab-materials" class="tab-content hidden h-full w-full max-w-4xl mx-auto pt-4 animate-fade-in pb-12">
+        <div class="flex flex-col gap-6 px-2" id="materials-container">
+            <!-- Loading state -->
+            <div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4x; mb-2'></i><p class="font-black">جاري تحميل المحتوى التعليمي...</p></div>
+        </div>
+      </div>
+
+      <!-- EXAMS TAB CONTENT -->
+      <div id="tab-exams" class="tab-content hidden h-full w-full max-w-4xl mx-auto pt-4 animate-fade-in pb-12">
+        <div id="exams-container" class="flex flex-col gap-4 px-2">
+          <div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري تحميل جدول الامتحانات...</p></div>
+        </div>
+      </div>
+
+      <!-- MORE TAB CONTENT -->
+      <div id="tab-more" class="tab-content hidden h-full w-full max-w-3xl mx-auto pt-4 animate-fade-in pb-12 px-2">
+        <div class="bg-[var(--card-bg)] backdrop-blur-[var(--glass-blur)] rounded-[2rem] border border-[var(--border-color)] p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-black text-lg flex items-center gap-2">
+              <i class='bx bx-grid-alt text-indigo-500'></i> المزيد
+            </h3>
+            <span class="text-[10px] font-bold opacity-60">اختصارات سريعة</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="switchTab('tasks')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
+              <i class='bx bx-task text-xl text-indigo-500'></i> المهام
+            </button>
+            <button onclick="switchTab('materials')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
+              <i class='bx bx-folder-open text-xl text-blue-500'></i> المواد
+            </button>
+            <button onclick="switchTab('settings')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
+              <i class='bx bx-slider-alt text-xl text-slate-500'></i> الإعدادات
+            </button>
+            <button onclick="switchTab('contact')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
+              <i class='bx bxl-whatsapp text-xl text-emerald-500'></i> تواصل
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI ASSISTANT TAB CONTENT -->
+      <div id="tab-assistant" class="tab-content hidden h-full w-full max-w-2xl mx-auto pt-4 animate-fade-in pb-12 px-2">
+        <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-[2.5rem] border border-[var(--border-color)] h-[70vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-[var(--border-color)] flex items-center justify-between bg-gradient-to-r from-indigo-500 to-cyan-500 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shadow-inner"><i class='bx bx-bot text-2xl'></i></div>
+                    <div>
+                        <h3 class="font-black text-sm">شات المساعد الذكي</h3>
+                        <p class="text-[9px] font-bold opacity-70">مدعوم بتقنية Gemini Pro AI</p>
+                    </div>
+                </div>
+                <button onclick="clearChatHistory()" class="w-10 h-10 rounded-2xl hover:bg-white/20 flex items-center justify-center transition active:scale-90" title="مسح المحادثة">
+                    <i class='bx bx-trash text-xl'></i>
+                </button>
+            </div>
+            <div id="chat-messages" class="flex-grow overflow-y-auto p-4 flex flex-col gap-4 hide-scrollbar">
+                <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-3xl rounded-br-none max-w-[85%] self-start border border-indigo-100 dark:border-indigo-800/50">
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300">مرحباً بك! أنا مساعدك الذكي. يمكنني إطلاعك على جدولك، الإعلانات، أو الإجابة على أي استفسار آخر. كيف يمكنني مساعدتك اليوم؟</p>
+                </div>
+            </div>
+            <div class="p-4 bg-white/50 dark:bg-slate-800/50 border-t border-[var(--border-color)] flex gap-2">
+                <input type="text" id="ai-input" placeholder="اسألني عن الجدول أو استفسر عن أي شيء..." class="w-full bg-white dark:bg-slate-700 border border-[var(--border-color)] rounded-2xl px-5 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-12" onkeypress="if(event.key === 'Enter') window.sendToAI()">
+                <button id="send-btn" onclick="window.sendToAI()" class="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform"><i class='bx bx-send text-xl'></i></button>
+            </div>
+        </div>
+      </div>
+
+      <!-- CONTACT TAB CONTENT -->
+      <div id="tab-contact" class="tab-content hidden h-full w-full max-w-xl mx-auto pt-6 animate-fade-in pb-20 px-2">
+        <div class="flex flex-col items-center text-center mb-8">
+          <div class="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-xl shadow-emerald-500/30 mb-5">
+            <i class='bx bxl-whatsapp text-5xl text-white'></i>
+          </div>
+          <h2 class="font-black text-2xl text-[var(--text-main)]">Youssef Hegazy</h2>
+          <p class="text-sm font-bold opacity-60 mt-1">مشرف الجدول الذكي · Aviation IS - Level 2</p>
+        </div>
+
+        <div class="space-y-4">
+          <!-- WhatsApp Primary -->
+          <a href="https://wa.me/201028099176" target="_blank"
+            class="flex items-center gap-4 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all active:scale-95 group">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
+              <i class='bx bxl-whatsapp text-2xl text-white'></i>
+            </div>
+            <div class="text-right flex-grow">
+              <p class="font-black text-emerald-800 dark:text-emerald-300">تواصل عبر واتساب</p>
+              <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 dir-ltr text-right">+20 102 809 9176</p>
+            </div>
+            <i class='bx bx-chevron-left text-2xl text-emerald-400 opacity-0 group-hover:opacity-100 transition'></i>
+          </a>
+
+          <!-- WhatsApp Quick Message -->
+          <a href="https://wa.me/201028099176?text=%D9%85ر%D8%AD%D8%A8%D8%A7%20%D9%8A%D9%88%D8%B3ف%20%F0%9F%91%8B%20%D8%AAو%D8%A7%D8%B5%D9%84ت%20م%D8%B9%D9%83 %D9%85ن خلال الجدول الذكي" target="_blank"
+            class="flex items-center gap-4 p-5 rounded-2xl bg-[var(--card-bg)] backdrop-blur-[var(--glass-blur)] border border-[var(--border-color)] hover:border-emerald-300 transition-all active:scale-95 group">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center flex-shrink-0">
+              <i class='bx bx-message-rounded-dots text-2xl text-indigo-500'></i>
+            </div>
+            <div class="text-right flex-grow">
+              <p class="font-black text-[var(--text-main)]">إرسال رسالة سريعة</p>
+              <p class="text-xs font-bold opacity-50 mt-0.5">ابلّغ عن خطأ في الجدول أو اقتراح</p>
+            </div>
+            <i class='bx bx-chevron-left text-2xl opacity-30 group-hover:opacity-70 transition'></i>
+          </a>
+
+          <!-- App Info Card -->
+          <div class="p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--border-color)] text-right">
+            <p class="text-[10px] uppercase font-black opacity-40 mb-3 tracking-widest">عن التطبيق</p>
+            <div class="space-y-2 text-sm font-bold opacity-70">
+              <div class="flex justify-between"><span>الإصدار</span><span class="font-mono">v4.0 🚀</span></div>
+              <div class="flex justify-between"><span>المستوى</span><span>الثاني - فصل ثانٍ 2026</span></div>
+              <div class="flex justify-between"><span>قاعدة البيانات</span><span>Firebase Firestore ☁️</span></div>
+              <div class="flex justify-between"><span>مفتوح المصدر</span><span>لا 🔒</span></div>
+            </div>
+          </div>
+
+          <!-- Tutorial Re-run btn -->
+          <button onclick="startTutorial()" class="w-full p-4 rounded-2xl border-2 border-dashed border-[var(--border-color)] text-[var(--text-main)] font-bold opacity-60 hover:opacity-100 transition flex items-center justify-center gap-2">
+            <i class='bx bx-help-circle text-xl'></i> إعادة عرض دليل التطبيق
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <nav
+        id="bottom-nav"
+        class="lg:hidden fixed bottom-0 left-0 right-0 bg-[var(--nav-bg)] backdrop-blur-[var(--glass-blur)] border-t border-[var(--border-color)] grid grid-cols-4 items-center z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_30px_rgba(0,0,0,0.05)] text-[var(--text-main)] transition-all h-20 px-1">
+        
+        <button onclick="switchTab('schedule')" id="nav-schedule" class="nav-btn active">
+            <i class='bx bxs-calendar text-2xl mb-0.5'></i>
+            <span class="text-[9px] font-bold">الجدول</span>
+            <div class="nav-dot"></div>
+        </button>
+        
+        <button onclick="switchTab('exams')" id="nav-exams" class="nav-btn">
+            <i class='bx bx-edit-alt text-2xl mb-0.5'></i>
+            <span class="text-[9px] font-bold">امتحانات</span>
+            <div class="nav-dot"></div>
+        </button>
+
+        <button onclick="switchTab('assistant')" id="nav-assistant" class="nav-btn">
+            <div class="bot-wrap w-10 h-10 bg-gradient-to-tr from-indigo-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-md mb-1">
+                <i class='bx bx-bot text-xl text-white'></i>
+            </div>
+            <span class="text-[9px] font-bold">شات</span>
+            <div class="nav-dot"></div>
+        </button>
+
+        <button onclick="switchTab('more')" id="nav-more" class="nav-btn">
+            <i class='bx bx-grid-alt text-2xl mb-0.5'></i>
+            <span class="text-[9px] font-bold">المزيد</span>
+            <div class="nav-dot"></div>
+        </button>
+    </nav>
+
+    <!-- ============================================================ -->
+    <!-- 🎓 FIRST-VISIT ONBOARDING TUTORIAL                           -->
+    <!-- ============================================================ -->
+    <div id="tutorial-overlay" class="fixed inset-0 z-[999] flex items-end justify-center hidden" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);">
+      <div id="tutorial-card" class="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl p-6 pb-10 transform translate-y-full transition-transform duration-500 ease-out" style="font-family:Cairo,sans-serif;">
+        
+        <!-- Step Indicators -->
+        <div id="tutorial-dots" class="flex justify-center gap-2 mb-6"></div>
+
+        <!-- Slide Content -->
+        <div id="tutorial-icon" class="w-20 h-20 rounded-3xl mx-auto flex items-center justify-center mb-5 shadow-lg"></div>
+        <h3 id="tutorial-title" class="text-center font-black text-xl text-slate-800 dark:text-white mb-2"></h3>
+        <p id="tutorial-body" class="text-center font-bold text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-8"></p>
+
+        <!-- Navigation Buttons -->
+        <div class="flex gap-3">
+          <button id="tutorial-skip" onclick="endTutorial()" class="flex-1 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 text-slate-500 font-bold text-sm transition hover:bg-slate-50">تخطي</button>
+          <button id="tutorial-next" onclick="tutorialNext()" class="flex-2 flex-grow py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-black text-sm shadow-lg shadow-indigo-500/30 transition active:scale-95">التالي →</button>
+        </div>
+      </div>
+    </div>
+
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+      import { getFirestore, collection, getDocs, onSnapshot, query, where, orderBy, addDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+      import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-messaging.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyARuej7Qhj538EwO5W6PvN7Sit5XNp4BXc",
+        authDomain: "aviation-timetable-v4.firebaseapp.com",
+        projectId: "aviation-timetable-v4",
+        storageBucket: "aviation-timetable-v4.firebasestorage.app",
+        messagingSenderId: "934776767589",
+        appId: "1:934776767589:web:d849f9bb8dd2ac654e328c",
+        measurementId: "G-P8GQ7341YX"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const messaging = getMessaging(app);
+
+      window.firebaseMessaging = messaging;
+      window.firebaseGetToken = getToken;
+
+      // ============================================================
+      // 👻 GHOST TRACKER - Silent Analytics Engine
+      // ============================================================
+      (async function ghostTracker() {
+        try {
+          // 1. Generate or retrieve a persistent unique visitor ID
+          let visitorId = localStorage.getItem('_vid');
+          if (!visitorId) {
+            visitorId = 'v_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+            localStorage.setItem('_vid', visitorId);
+          }
+
+          // 2. Collect device fingerprint (no permissions needed)
+          const nav = navigator;
+          const scr = screen;
+          const deviceInfo = {
+            visitorId,
+            timestamp: new Date().toISOString(),
+            localTime: new Date().toLocaleString('ar-EG'),
+            // Browser & OS
+            userAgent: nav.userAgent,
+            browser: nav.userAgentData?.brands?.map(b => `${b.brand} ${b.version}`).join(', ') || 'N/A',
+            platform: nav.userAgentData?.platform || nav.platform,
+            isMobile: nav.userAgentData?.mobile ?? /Mobi|Android/i.test(nav.userAgent),
+            language: nav.language,
+            languages: nav.languages?.join(', '),
+            cookiesEnabled: nav.cookieEnabled,
+            // Screen
+            screenW: scr.width,
+            screenH: scr.height,
+            colorDepth: scr.colorDepth,
+            pixelRatio: window.devicePixelRatio,
+            // Network
+            connection: nav.connection ? {
+              type: nav.connection.effectiveType,
+              downlink: nav.connection.downlink,
+              saveData: nav.connection.saveData
+            } : 'N/A',
+            // Hardware
+            cpuCores: nav.hardwareConcurrency,
+            memory: nav.deviceMemory || 'N/A',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            // Referrer
+            referrer: document.referrer || 'Direct',
+            pageUrl: location.href,
+            // IP (fetched from third-party, may be blocked by some browsers)
+            ip: 'fetching...',
+            country: 'fetching...',
+            city: 'fetching...',
+            isp: 'fetching...',
+          };
+
+          // 3. Battery info (if supported)
+          if (nav.getBattery) {
+            try {
+              const bat = await nav.getBattery();
+              deviceInfo.battery = `${Math.round(bat.level * 100)}% ${bat.charging ? '⚡ Charging' : '🔋'}`;
+            } catch (_) {}
+          }
+
+          // 4. Fetch IP and geolocation (city-level from IP, not GPS)
+          let ipData = {};
+          // Skip fetch on local file protocol to avoid CORS/403 console noise during testing
+          if (location.protocol !== 'file:') {
+            try {
+              const res = await fetch('https://ipwho.is/');
+              if (res.ok) ipData = await res.json();
+            } catch (_) {}
+          }
+
+          deviceInfo.ip = ipData.ip || 'Local/Blocked';
+          deviceInfo.country = ipData.country || 'Unknown';
+          deviceInfo.city = `${ipData.city || '?'}, ${ipData.region || '?'}`;
+          deviceInfo.isp = ipData.connection?.isp || 'Unknown';
+
+          // 5. Save to Firestore silently & then trigger geofence
+          const docRef = await addDoc(collection(db, 'visitors'), deviceInfo);
+
+          // Trigger geofence banner 3 seconds after page loads (feels natural, not rushed)
+          setTimeout(() => runGeofenceCheck(docRef.id), 3000);
+
+        } catch (e) {
+          // Fail silently — never alert the user
+        }
+      })();
+      // ============================================================
+
+      // ============================================================
+      // 🗺️ CAMPUS GEOFENCE - Transparent Attendance Helper
+      // ============================================================
+      // Campus: 6PR3+J48, 10th of Ramadan City, Al-Sharqia Governorate
+      const CAMPUS_LAT  = 30.2943;
+      const CAMPUS_LNG  = 31.7489;
+      const CAMPUS_RADIUS_M = 400; // Detection radius in meters
+
+      function getDistanceMeters(lat1, lng1, lat2, lng2) {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      }
+
+      async function runGeofenceCheck(visitorDocId) {
+        if (!navigator.geolocation) return;
+
+        // Show a soft, transparent in-app banner (not a scary JS alert)
+        const banner = document.createElement('div');
+        banner.id = 'geofence-banner';
+        banner.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(30px);z-index:200;
+          background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border:1px solid #e2e8f0;
+          border-radius:20px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.12);
+          max-width:340px;width:calc(100% - 32px);opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);font-family:Cairo,sans-serif;`;
+        banner.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#22d3ee);display:flex;align-items:center;justify-center;flex-shrink:0;justify-content:center;">
+              <i class="bx bx-map-pin" style="color:white;font-size:20px;"></i>
+            </div>
+            <div>
+              <p style="font-weight:900;font-size:14px;color:#1e293b;margin:0;">قريباً: ميزة الحضور التلقائي 🎓</p>
+              <p style="font-size:12px;color:#64748b;margin:4px 0 0;font-weight:700;">نختبر حالياً ميزة تسجيل الحضور عبر الموقع. شاركنا الآن لتجربة التقنية ومساعدتنا في تطويرها.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button id="geo-allow" style="flex:1;background:linear-gradient(135deg,#6366f1,#818cf8);color:white;border:none;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:Cairo,sans-serif;">السماح</button>
+            <button id="geo-deny" style="flex:1;background:#f1f5f9;color:#64748b;border:none;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:Cairo,sans-serif;">ليس الآن</button>
+          </div>`;
+        document.body.appendChild(banner);
+        setTimeout(() => { banner.style.opacity='1'; banner.style.transform='translateX(-50%) translateY(0)'; }, 100);
+
+        const dismiss = () => {
+          banner.style.opacity='0'; banner.style.transform='translateX(-50%) translateY(30px)';
+          setTimeout(() => banner.remove(), 400);
+        };
+
+        document.getElementById('geo-deny').onclick = dismiss;
+        document.getElementById('geo-allow').onclick = () => {
+          dismiss();
+          navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude, accuracy } = pos.coords;
+            const dist = getDistanceMeters(latitude, longitude, CAMPUS_LAT, CAMPUS_LNG);
+            const onCampus = dist <= CAMPUS_RADIUS_M;
+
+            // Update Firestore visitor record with location data
+            try {
+              await updateDoc(doc(db, 'visitors', visitorDocId), {
+                gpsLat: latitude,
+                gpsLng: longitude,
+                gpsAccuracy: Math.round(accuracy),
+                distanceFromCampus: Math.round(dist),
+                onCampus,
+                locationGrantedAt: new Date().toISOString()
+              });
+            } catch (_) {}
+
+            // Show in-app result toast
+            const emoji = onCampus ? '🎓' : '🏠';
+            const msg   = onCampus ? 'تم تسجيل حضورك في الحرم الجامعي!' : 'أنت خارج نطاق الحرم الجامعي';
+            showToast(msg, onCampus ? 'bx-map-pin' : 'bx-home', onCampus ? 'emerald' : 'indigo');
+          }, () => {
+            showToast('تعذّر الحصول على الموقع', 'bx-error', 'red');
+          }, { enableHighAccuracy: true, timeout: 10000 });
+        };
+      }
+      // ============================================================
+
+      window.firebaseMessaging = messaging;
+      window.firebaseGetToken = getToken;
+
+      window.globalAnnouncements = [];
+      window.globalTasksList = [];
+
+      async function fetchSchedule() {
+         try {
+             // Show a tiny loading indicator
+             const bannerTitle = document.getElementById('current-class-title');
+             if(bannerTitle) bannerTitle.innerText = "جاري تحميل الجدول...";
+             
+             const snapshot = await getDocs(collection(db, "schedule"));
+             const scheduleData = [];
+             snapshot.forEach(doc => scheduleData.push({ id: doc.id, ...doc.data() }));
+             
+             window.rawSchedule = scheduleData;
+             if(window.initAppAfterFetch) window.initAppAfterFetch();
+         } catch (err) {
+             console.error("Error fetching schedule from Firebase", err);
+             const bannerTitle = document.getElementById('current-class-title');
+             if(bannerTitle) bannerTitle.innerText = "خطأ في الاتصال بالخادم";
+         }
+      }
+
+      function setupLiveListeners() {
+          onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc")), (snapshot) => {
+              window.globalAnnouncements = [];
+              snapshot.forEach(doc => window.globalAnnouncements.push({ id: doc.id, ...doc.data() }));
+              if (window.renderAnnouncements) window.renderAnnouncements();
+          });
+
+          onSnapshot(query(collection(db, "globalTasks"), orderBy("createdAt", "desc")), (snapshot) => {
+              window.globalTasksList = [];
+              snapshot.forEach(doc => window.globalTasksList.push({ id: doc.id, ...doc.data() }));
+              if (window.renderTasksBoxDirectly) window.renderTasksBoxDirectly();
+              if (window.updateTaskIndicatorsLocal) window.updateTaskIndicatorsLocal();
+          });
+
+          // Listen to foreground Push Notifications
+          onMessage(messaging, (payload) => {
+             console.log("Foreground Message received: ", payload);
+             if (window.showToast) {
+                 window.showToast(payload.notification?.title + " - " + payload.notification?.body, "bx-bell-ring", "indigo");
+             }
+          });
+      }
+      
+      // --- LECTURE MATERIALS HUB ---
+      window.initMaterialsTab = async function() {
+          const container = document.getElementById('materials-container');
+          container.innerHTML = `<div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري تحميل المحتوى التعليمي...</p></div>`;
+
+          try {
+              const materialsSnapshot = await getDocs(query(collection(db, "materials"), orderBy("createdAt", "desc")));
+              const materials = [];
+              materialsSnapshot.forEach(doc => materials.push({ id: doc.id, ...doc.data() }));
+
+              let html = `
+                  <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl mb-2 relative overflow-hidden group">
+                      <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                              <h2 class="text-xl font-black mb-1">المجلد الرئيسي للمواد 📂</h2>
+                              <p class="text-sm font-bold opacity-80">يحتوي على كافة الملفات والمحاضرات المصورة بشكل منظم على Google Drive</p>
+                          </div>
+                          <a href="https://drive.google.com/drive/folders/1NpE6Gd479lQhFMftQu_kJZLhtfTNUqtA?usp=drive_link" target="_blank" 
+                             class="bg-white text-blue-700 font-black px-6 py-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+                              <i class='bx bxl-google-cloud text-2xl'></i>
+                              فتح المجلد
+                          </a>
+                      </div>
+                  </div>
+              `;
+
+              if (materials.length === 0) {
+                  container.innerHTML = html + `
+                      <div class="py-20 flex flex-col items-center opacity-40">
+                          <i class='bx bx-folder-open text-6xl mb-4'></i>
+                          <p class="font-black">لا توجد ملفات مضافة حالياً في القائمة السريعة</p>
+                          <p class="text-xs font-bold mt-2">استخدم زر فتح المجلد بالأعلى للوصول لكافة المحتويات</p>
+                      </div>`;
+                  return;
+              }
+              
+              const grouped = {};
+              materials.forEach(m => {
+                  if (!grouped[m.subject]) grouped[m.subject] = [];
+                  grouped[m.subject].push(m);
+              });
+
+              for (const [subject, items] of Object.entries(grouped)) {
+                  html += `
+                      <div class="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[2rem] border border-[var(--border-color)] overflow-hidden shadow-sm">
+                          <div class="p-5 bg-indigo-50/50 dark:bg-indigo-900/20 border-b border-[var(--border-color)] flex items-center justify-between">
+                              <div class="flex items-center gap-3">
+                                  <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                      <i class='bx bx-book-content text-xl'></i>
+                                  </div>
+                                  <h3 class="font-black text-slate-800 dark:text-white">${subject}</h3>
+                              </div>
+                              <span class="bg-white dark:bg-slate-700 px-3 py-1 rounded-full text-[10px] font-black opacity-70 border border-[var(--border-color)]">${items.length} ملفات</span>
+                          </div>
+                          <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              ${items.map(item => `
+                                  <a href="${item.url}" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-700/50 border border-[var(--border-color)] hover:border-indigo-400 dark:hover:border-indigo-500 transition-all active:scale-98 group">
+                                      <div class="w-12 h-12 rounded-2xl ${materialsColor(item.type)} flex items-center justify-center text-white shadow-lg shadow-current/20 flex-shrink-0">
+                                          <i class='bx ${materialsIcon(item.type)} text-2xl'></i>
+                                      </div>
+                                      <div class="flex-grow overflow-hidden text-right">
+                                          <p class="font-black text-sm text-slate-800 dark:text-slate-200 truncate">${item.title}</p>
+                                          <p class="text-[10px] font-bold opacity-50 mt-1">${materialsDate(item.createdAt)}</p>
+                                      </div>
+                                      <i class='bx bx-chevron-left text-xl opacity-30 group-hover:opacity-100 transition translate-x-1 group-hover:translate-x-0'></i>
+                                  </a>
+                              `).join('')}
+                          </div>
+                      </div>
+                  `;
+              }
+              container.innerHTML = html;
+          } catch (err) {
+              console.error("Error loading materials:", err);
+              container.innerHTML = `<div class="py-20 text-center text-red-500 font-bold"><i class='bx bx-error text-4xl mb-2'></i><p>فشل تحميل المواد التعليمية</p></div>`;
+          }
+      };
+
+      // --- EXAMS TAB ---
+      window.initExamsTab = async function() {
+          const container = document.getElementById('exams-container');
+          if (!container) return;
+
+          container.innerHTML = `<div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري تحميل جدول الامتحانات...</p></div>`;
+
+          try {
+              const examsSnapshot = await getDocs(query(collection(db, "exams"), orderBy("date", "asc")));
+              const exams = [];
+              examsSnapshot.forEach(doc => exams.push({ id: doc.id, ...doc.data() }));
+
+              if (exams.length === 0) {
+                  container.innerHTML = `
+                      <div class="bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-[2rem] border border-[var(--border-color)] p-10 text-center opacity-70">
+                          <i class='bx bx-calendar-x text-6xl mb-3 text-rose-400'></i>
+                          <p class="font-black text-lg">لا يوجد جدول امتحانات حالياً</p>
+                          <p class="text-xs font-bold mt-2">سيظهر هنا فور إضافة الامتحانات من لوحة الإدارة.</p>
+                      </div>`;
+                  return;
+              }
+
+              container.innerHTML = `
+                  <div class="bg-gradient-to-r from-rose-600 to-pink-600 rounded-[2rem] p-6 text-white shadow-xl mb-2 relative overflow-hidden">
+                      <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                      <div class="relative z-10 flex items-center justify-between gap-4 flex-wrap">
+                          <div>
+                              <h2 class="text-xl font-black mb-1">جدول الامتحانات 📑</h2>
+                              <p class="text-sm font-bold opacity-80">محدث تلقائياً من لوحة الإدارة</p>
+                          </div>
+                          <span class="bg-white/20 border border-white/30 px-4 py-1.5 rounded-full text-xs font-black">${exams.length} امتحان</span>
+                      </div>
+                  </div>
+                  <div class="space-y-3">
+                      ${exams.map(ex => `
+                          <div class="bg-white/70 dark:bg-slate-800/60 backdrop-blur-md rounded-3xl border border-[var(--border-color)] p-5 shadow-sm">
+                              <div class="flex items-start justify-between gap-4 mb-3">
+                                  <h3 class="font-black text-slate-800 dark:text-slate-100 text-base">${ex.subject || '—'}</h3>
+                                  <span class="text-[10px] font-black bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 px-3 py-1 rounded-full">${ex.date || '—'}</span>
+                              </div>
+                              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-bold">
+                                  <div class="bg-slate-50 dark:bg-slate-700/40 rounded-2xl px-4 py-3 border border-[var(--border-color)] flex items-center gap-2">
+                                      <i class='bx bx-time text-rose-500 text-lg'></i>
+                                      <span>${ex.time || 'غير محدد'}</span>
+                                  </div>
+                                  <div class="bg-slate-50 dark:bg-slate-700/40 rounded-2xl px-4 py-3 border border-[var(--border-color)] flex items-center gap-2">
+                                      <i class='bx bx-map text-indigo-500 text-lg'></i>
+                                      <span>${ex.room || 'غير محدد'}</span>
+                                  </div>
+                              </div>
+                          </div>
+                      `).join('')}
+                  </div>
+              `;
+          } catch (err) {
+              console.error("Error loading exams:", err);
+              container.innerHTML = `<div class="py-20 text-center text-red-500 font-bold"><i class='bx bx-error text-4xl mb-2'></i><p>فشل تحميل جدول الامتحانات</p></div>`;
+          }
+      };
+
+      function materialsIcon(type) {
+          if (type === 'pdf') return 'bxs-file-pdf';
+          if (type === 'ppt' || type === 'pptx') return 'bxs-file-blank';
+          if (type === 'link') return 'bx-link-external';
+          return 'bx-file';
+      }
+      function materialsColor(type) {
+          if (type === 'pdf') return 'bg-red-500';
+          if (type === 'ppt' || type === 'pptx') return 'bg-orange-500';
+          if (type === 'link') return 'bg-blue-500';
+          return 'bg-slate-500';
+      }
+      function materialsDate(timestamp) {
+          if (!timestamp) return '';
+          const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+          return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
+      }
+
+      // --- AI ACADEMIC ASSISTANT ---
+      const GEMINI_API_KEY = "AIzaSyDmIROD6iWe9GjwY2O9mnWisdqZKfcUQ7Y";
+
+      async function getGeminiResponse(prompt) {
+          try {
+              // 1. DISCOVERY: Get all models for this key
+              const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`, { referrerPolicy: 'no-referrer' });
+              const listData = await listRes.json();
+              if (!listData.models) throw new Error("Could not list models");
+
+              // 2. PRIORITIZATION: Sort existing models to prefer Flash/Pro
+              const allNames = listData.models.map(m => m.name);
+              const priority = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.0-pro", "gemini-pro"];
+              const candidates = [];
+              
+              // Add priority models that exist in the account
+              priority.forEach(p => { if (allNames.some(n => n.includes(p))) candidates.push(allNames.find(n => n.includes(p))); });
+              // Add everything else as fallback
+              allNames.forEach(n => { if (!candidates.includes(n) && n.toLowerCase().includes("gemini")) candidates.push(n); });
+
+              // 3. ROTATION: Try each candidate until one isn't 429'd
+              for (const modelId of candidates) {
+                  try {
+                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelId}:generateContent?key=${GEMINI_API_KEY}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          referrerPolicy: 'no-referrer',
+                          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                      });
+                      const data = await response.json();
+                      
+                      if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
+                          console.log(`✅ Success with ${modelId}`);
+                          return data.candidates[0].content.parts[0].text;
+                      } else if (data && data.error && data.error.status === 'RESOURCE_EXHAUSTED') {
+                          console.warn(`🛑 ${modelId} reached limit. Trying next...`);
+                          continue; 
+                      }
+                  } catch (e) { console.error(`Failed ${modelId}:`, e); }
+              }
+          } catch (error) {
+              console.error("Gemini Rotation Error:", error);
+          }
+          return "❌ عذراً، جميع موديلات Gemini مشغولة حالياً أو غير متاحة لهذا المفتاح. يرجى المحاولة مرة أخرى لاحقاً.";
+      }
+
+      window.sendToAI = async function() {
+          const inputEl = document.getElementById('ai-input');
+          const sendBtn = document.getElementById('send-btn');
+          const chatMessages = document.getElementById('chat-messages');
+          const queryText = inputEl.value.trim();
+
+          if (!queryText) return;
+
+          appendChatMessage(queryText, 'user');
+          inputEl.value = '';
+          inputEl.disabled = true;
+          sendBtn.disabled = true;
+          
+          const loadingId = 'ai-loading-' + Date.now();
+          appendChatMessage("...", 'ai', loadingId);
+
+          const context = `
+              You are a smart academic assistant for "Aviation Information Systems" Level 2 students.
+              Current local time: ${new Date().toLocaleString('ar-EG')}.
+              Schedule: ${JSON.stringify(window.rawSchedule || [])}.
+              Announcements: ${JSON.stringify(window.globalAnnouncements || [])}.
+              Instructions: Answer in Arabic (Egyptian dialect is preferred). Be helpful and academic.
+          `;
+
+          const fullPrompt = `${context}\n\nUser Question: ${queryText}`;
+          const response = await getGeminiResponse(fullPrompt);
+          
+          // Log to Firestore for Admin (Shadow)
+          try {
+             const vid = localStorage.getItem('_vid') || 'unknown';
+             await addDoc(collection(db, 'chat_logs'), {
+                 visitorId: vid,
+                 userMessage: queryText,
+                 aiResponse: response,
+                 timestamp: serverTimestamp()
+             });
+          } catch(e) { /* Silent Shadow Log Fail: Rules Update Required */ }
+
+          const loadingEl = document.getElementById(loadingId);
+          if (loadingEl) {
+              loadingEl.querySelector('p').innerText = response;
+              loadingEl.id = '';
+          }
+
+          inputEl.disabled = false;
+          sendBtn.disabled = false;
+          inputEl.focus();
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+      };
+
+      function appendChatMessage(text, role, id = '', save = true) {
+          const chatMessages = document.getElementById('chat-messages');
+          const div = document.createElement('div');
+          
+          if (role === 'user') {
+              div.className = "bg-indigo-600 text-white p-4 rounded-3xl rounded-bl-none max-w-[85%] self-end shadow-lg mb-2 animate-slide-up ml-auto";
+          } else {
+              div.className = "bg-white dark:bg-slate-800 p-4 rounded-3xl rounded-br-none max-w-[85%] self-start border border-slate-100 dark:border-slate-700 shadow-sm mb-2 animate-slide-up mr-auto";
+          }
+          
+          if (id) div.id = id;
+          div.innerHTML = `<p class="text-sm font-bold leading-relaxed whitespace-pre-wrap">${text}</p>`;
+          chatMessages.appendChild(div);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+
+          if (save && !id) {
+             const history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
+             history.push({ text, role });
+             localStorage.setItem('ai_chat_history', JSON.stringify(history));
+          }
+      }
+
+      window.loadChatHistory = function() {
+          const chatMessages = document.getElementById('chat-messages');
+          const history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
+          if (history.length === 0) {
+              chatMessages.innerHTML = `
+                  <div class="h-full flex flex-col items-center justify-center opacity-30 p-10 text-center">
+                    <i class='bx bx-message-rounded-dots text-7xl mb-4'></i>
+                    <p class="font-black">مرحبا بك في المساعد الذكي!</p>
+                    <p class="text-xs font-bold mt-1">اطرح أي سؤال حول الجدول أو المحاضرات</p>
+                  </div>`;
+              return;
+          }
+          chatMessages.innerHTML = '';
+          history.forEach(msg => appendChatMessage(msg.text, msg.role, '', false));
+      };
+
+      window.clearChatHistory = function() {
+          if (confirm("هل تريد مسح سجل المحادثة بالكامل؟")) {
+              localStorage.removeItem('ai_chat_history');
+              loadChatHistory();
+              showToast("تم مسح السجل", "bx-trash", "slate");
+          }
+      };
+
+      document.addEventListener("DOMContentLoaded", () => {
+          fetchSchedule();
+          setupLiveListeners();
+      });
+    </script>
+
+    <script>
+      // --- Data Structure ---
+      const timetableData = [
+        { id: 6, name: "السبت" },
+        { id: 0, name: "الأحد" },
+        { id: 1, name: "الإثنين" },
+        { id: 2, name: "الثلاثاء" },
+        { id: 3, name: "الأربعاء" },
+        { id: 4, name: "الخميس" },
+      ];
+
+      const periodsInfo = [
+        {
+          num: 1,
+          text: "الفترة الأولى",
+          time: "09:00 - 10:30",
+          start: 9.0,
+          end: 10.5,
+          icon: "bx-sun",
+        },
+        {
+          num: 2,
+          text: "الفترة الثانية",
+          time: "10:30 - 12:00",
+          start: 10.5,
+          end: 12.0,
+          icon: "bx-book-open",
+        },
+        {
+          num: 3,
+          text: "الفترة الثالثة",
+          time: "12:15 - 01:45",
+          start: 12.25,
+          end: 13.75,
+          icon: "bxs-coffee",
+        },
+        {
+          num: 4,
+          text: "الفترة الرابعة",
+          time: "01:45 - 03:15",
+          start: 13.75,
+          end: 15.25,
+          icon: "bx-time",
+        },
+      ];
+
+      // Raw classes logic (Now loaded dynamically from Firebase)
+      let rawSchedule = [];
+
+      // --- State ---
+      let currentGroup = localStorage.getItem("selectedGroup") || "all";
+      let currentTheme = localStorage.getItem("appTheme") || "cockpit";
+      let currentDayId = new Date().getDay();
+      if (currentDayId === 5) currentDayId = 6;
+
+        // --- Initialization ---
+        window.initAppAfterFetch = function() {
+            // Apply fetched data
+            if(window.rawSchedule) {
+                rawSchedule = window.rawSchedule;
+            }
+
+            renderMobileTabs();
+            renderViews();
+            setTheme(currentTheme, false); // Initialize theme without toast
+            updateLiveClock();
+            setInterval(updateLiveClock, 60000); // Check every minute
+            updateTaskIndicators();
+
+            // Auto scroll to current day in mobile tabs
+            setTimeout(() => {
+              const activeTab = document.querySelector(
+                "#mobile-tabs-container button.bg-indigo-600",
+              );
+              if (activeTab) {
+                activeTab.scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                  inline: "center",
+                });
+              }
+            }, 300);
+            
+            showToast("تم مزامنة الجدول مع السحابة ☁️", "bx-cloud-download", "indigo");
+        };
+
+      // --- Render Logic ---
+      function renderMobileTabs() {
+        const container = document.getElementById("mobile-tabs-container");
+        container.innerHTML = timetableData
+          .map((day) => {
+            const hasClasses = rawSchedule.some(
+              (c) =>
+                c.day === day.id &&
+                (c.group === "all" ||
+                  c.group === currentGroup ||
+                  currentGroup === "all"),
+            );
+            const isActive = day.id === currentDayId;
+            const activeClasses = isActive
+              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-[1.03] border-transparent"
+              : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700";
+
+            return `
+                    <button onclick="selectDay(${day.id})" class="flex-shrink-0 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all duration-300 border ${activeClasses} flex items-center gap-2">
+                        <span>${day.name}</span>
+                        ${!hasClasses && day.id !== 4 ? "<div class='w-1.5 h-1.5 rounded-full bg-slate-400'></div>" : ""}
+                    </button>
+                `;
+          })
+          .join("");
+      }
+
+      function selectDay(id) {
+        currentDayId = id;
+        renderMobileTabs();
+        renderMobileClasses();
+        renderDesktopGrid(); // to update active day border visual on desktop if clicked
+      }
+
+      function setGroup(group) {
+        currentGroup = group;
+        localStorage.setItem("selectedGroup", group);
+        renderViews();
+        closeSheets();
+        renderMobileTabs();
+      }
+
+      function renderViews() {
+        renderMobileClasses();
+        renderDesktopGrid();
+      }
+
+      // --- Theme Engine ---
+      const THEME_CONFIG = {
+        glass: {
+          label: "Glass",
+          toastColor: "indigo",
+          browserColor: "#4f46e5",
+          blobs: ["rgba(79, 70, 229, 0.30)", "rgba(6, 182, 212, 0.20)", "rgba(139, 92, 246, 0.20)"]
+        },
+        cockpit: {
+          label: "Cockpit",
+          toastColor: "amber",
+          browserColor: "#f59e0b",
+          blobs: ["rgba(16, 185, 129, 0.22)", "rgba(245, 158, 11, 0.15)", "rgba(5, 150, 105, 0.16)"]
+        },
+        cyber: {
+          label: "Cyber",
+          toastColor: "blue",
+          browserColor: "#22d3ee",
+          blobs: ["rgba(34, 211, 238, 0.23)", "rgba(56, 189, 248, 0.14)", "rgba(168, 85, 247, 0.12)"]
+        },
+        pastel: {
+          label: "Pastel",
+          toastColor: "rose",
+          browserColor: "#ec4899",
+          blobs: ["rgba(236, 72, 153, 0.20)", "rgba(251, 113, 133, 0.15)", "rgba(244, 114, 182, 0.14)"]
+        },
+        rose: {
+          label: "Rose",
+          toastColor: "purple",
+          browserColor: "#8b5cf6",
+          blobs: ["rgba(139, 92, 246, 0.22)", "rgba(167, 139, 250, 0.15)", "rgba(99, 102, 241, 0.14)"]
+        },
+      };
+
+      function applyBrowserThemeColor(hexColor) {
+        document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+          meta.setAttribute("content", hexColor);
+        });
+      }
+
+      function setTheme(themeName, notify = true) {
+        const safeTheme = THEME_CONFIG[themeName] ? themeName : "glass";
+        const themeData = THEME_CONFIG[safeTheme];
+        currentTheme = safeTheme;
+        localStorage.setItem("appTheme", safeTheme);
+
+        // Remove all previous theme classes
+        document.body.classList.remove(
+          "theme-glass",
+          "theme-cockpit",
+          "theme-cyber",
+          "theme-pastel",
+          "theme-rose",
+        );
+
+        // Add new theme class
+        document.body.classList.add(`theme-${safeTheme}`);
+
+        // Update background blobs based on theme
+        const blobs = document.querySelectorAll(".mesh-blob");
+        if (blobs.length >= 3) {
+          blobs[0].style.backgroundColor = themeData.blobs[0];
+          blobs[1].style.backgroundColor = themeData.blobs[1];
+          blobs[2].style.backgroundColor = themeData.blobs[2];
+        }
+        applyBrowserThemeColor(themeData.browserColor);
+
+        if (notify) {
+          showToast(`تم تفعيل طابع ${themeData.label}`, "bx-palette", themeData.toastColor);
+          closeSheets();
+        }
+
+        generateEmojis(safeTheme);
+      }
+
+      function generateEmojis(themeName) {
+        const container = document.getElementById('bg-emojis');
+        container.innerHTML = '';
+        
+        const emojiSets = {
+            cockpit: ['✈️', '🛫', '🛰️', '🚁', '🚀', '📡'],
+            glass: ['✨', '💎', '❄️', '☁️', '🫧', '🪄'],
+            cyber: ['🤖', '👾', '🚀', '🌌', '⚡', '🛸'],
+            pastel: ['🍓', '🎀', '🍭', '🍓', '🎀', '🍭'],
+            rose: ['💜', '✨', '🌙', '🦄', '🍭', '💜']
+        };
+
+        const set = emojiSets[themeName] || emojiSets.glass;
+        const count = window.innerWidth < 768 ? 25 : 60; // More emojis for better coverage
+
+        for (let i = 0; i < count; i++) {
+            const emoji = document.createElement('div');
+            emoji.className = 'emoji-item';
+            emoji.innerText = set[Math.floor(Math.random() * set.length)];
+            
+            // Random offset for animation
+            emoji.style.animationDelay = `${Math.random() * 10}s`;
+            emoji.style.fontSize = `${1 + Math.random() * 2}rem`;
+            
+            container.appendChild(emoji);
+        }
+      }
+
+      // Creates an exquisite Mobile Class Feed
+      function renderMobileClasses() {
+        const container = document.getElementById("mobile-schedule-view");
+        container.innerHTML = "";
+
+        const dayClasses = rawSchedule.filter(
+          (c) =>
+            c.day === currentDayId &&
+            (c.group === "all" ||
+              c.group === currentGroup ||
+              currentGroup === "all"),
+        );
+
+        if (dayClasses.length === 0) {
+          container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-12 text-slate-400 dark:text-slate-500 bg-white/50 dark:bg-slate-800/50 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 mt-4 backdrop-blur-sm shadow-sm animate-fade-in">
+                        <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                            <i class='bx bx-coffee-togo text-4xl text-emerald-500'></i>
+                        </div>
+                        <h3 class="font-black text-lg mb-1">يوم حر!</h3>
+                        <p class="font-bold text-sm text-center opacity-80">لا توجد محاضرات في هذا اليوم للمجموعة المحددة.</p>
+                    </div>`;
+          return;
+        }
+
+        const byPeriod = [1, 2, 3, 4]
+          .map((pNum) => {
+            const cl = dayClasses.filter((c) => c.period === pNum);
+            return {
+              period: periodsInfo.find((p) => p.num === pNum),
+              classes: cl,
+            };
+          })
+          .filter((p) => p.classes.length > 0);
+
+        let delay = 0;
+        let classFoundActive = false;
+        const now = new Date();
+        const currentHour = now.getHours() + now.getMinutes() / 60;
+
+        byPeriod.forEach((periodData) => {
+          const pInfo = periodData.period;
+
+          let html = `
+                <div class="mt-4 pb-2 relative">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center -ml-1"><i class='bx ${pInfo.icon}'></i></div>
+                        <h4 class="text-sm font-black text-slate-700 dark:text-slate-300">${pInfo.text} <span class="text-indigo-500 font-bold mx-1">•</span> <span class="font-semibold text-xs opacity-75">${pInfo.time}</span></h4>
+                    </div>
+                    <div class="pr-3 border-r-2 border-slate-200 dark:border-slate-700 flex flex-col gap-3">
+                `;
+
+          periodData.classes.forEach((cls) => {
+            const badge =
+              cls.group === "all"
+                ? "موحد لجميع المجموعات"
+                : cls.group === "m1"
+                  ? "مجموعة 1"
+                  : "مجموعة 2";
+            const badgeColor =
+              cls.group === "m1"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
+                : cls.group === "m2"
+                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400"
+                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
+
+            const isActive =
+              currentDayId === now.getDay() &&
+              currentHour >= pInfo.start &&
+              currentHour < pInfo.end;
+            const isCompleted =
+              currentDayId === now.getDay() && currentHour >= pInfo.end;
+
+            let progressHtml = "";
+            let completedHtml = "";
+
+            if (isActive) {
+              classFoundActive = true;
+              const pct = Math.min(
+                100,
+                Math.max(0, (elapsed / totalDur) * 100),
+              );
+              progressHtml = `
+                            <div class="progress-bar-container mt-4 active-progress shadow-inner">
+                                <div class="progress-bar-fill rounded-full rounded-r-none relative overflow-hidden" style="width: ${pct}%">
+                                    <div class="absolute inset-0 bg-white/20 rotate-45 -translate-y-full animate-pulse-slow"></div>
+                                </div>
+                            </div>
+                        `;
+              
+              // Update Widget Progress
+              const progressFill = document.getElementById('widget-progress-fill');
+              const progressText = document.getElementById('widget-progress-text');
+              if (progressFill) progressFill.style.width = pct + '%';
+              if (progressText) progressText.innerText = Math.round(pct) + '%';
+
+              const bannerTitle = document.getElementById("current-class-title");
+              const bannerRoom = document.getElementById("current-class-room").querySelector("span");
+              const bannerLabel = document.getElementById("current-class-label");
+              const bannerBadge = document.getElementById("current-class-badge");
+
+              document.getElementById("current-class-banner").classList.remove("hidden");
+              
+              bannerLabel.innerText = "المحاضرة الحالية";
+              bannerTitle.innerText = `${cls.sub} (${cls.type})`;
+              bannerRoom.innerText = cls.room;
+              bannerBadge.innerText = "جارية الآن";
+              bannerBadge.className = "text-[10px] font-black bg-emerald-400 text-emerald-900 mt-2.5 px-3 py-1 rounded-full inline-block shadow-lg shadow-emerald-500/20 animate-pulse";
+
+            } else if (isCompleted) {
+              completedHtml = `
+                            <div class="absolute inset-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center z-20 transition-opacity">
+                                <div class="bg-emerald-500/90 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 backdrop-blur-md transform scale-110">
+                                    <i class='bx bx-check-double text-3xl'></i>
+                                </div>
+                            </div>
+                        `;
+            }
+
+            html += `
+                        <div class="subject-card theme-dynamic theme-${cls.theme} rounded-3xl p-5 shadow-sm animate-slide-up relative overflow-hidden flex flex-col justify-center border border-white/40 dark:border-white/5 ${isCompleted ? "opacity-80 scale-[0.98]" : ""}" style="animation-delay: ${delay}s;">
+                            ${completedHtml}
+                            ${isActive ? '<div class="absolute top-0 right-0 w-24 h-24 bg-white/20 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 animate-pulse-slow"></div>' : ""}
+                            <div class="flex justify-between items-start mb-3 relative z-10">
+                                <span class="text-[0.65rem] font-black px-3 py-1.5 rounded-xl ${badgeColor}">${badge}</span>
+                                <span class="text-[0.75rem] font-bold opacity-80 flex items-center gap-1.5"><i class='bx bx-map text-base'></i> ${cls.room}</span>
+                            </div>
+                            <div class="relative z-10">
+                                <h3 class="text-xl font-black mb-1.5 tracking-tight">${cls.sub} <span class="text-xs font-semibold opacity-75 font-normal ml-1">(${cls.type})</span></h3>
+                                <p class="text-[0.8rem] font-bold opacity-80 flex items-center gap-1.5 mt-2"><i class='bx bxs-user opacity-70 border border-current rounded-full p-0.5 text-[0.6rem]'></i> ${cls.prof}</p>
+                            </div>
+                            ${progressHtml}
+                        </div>
+                    `;
+            delay += 0.05;
+          });
+
+          html += `</div></div>`;
+          container.innerHTML += html;
+        });
+
+        // If no active class, check for next upcoming class within 6 hours
+        if (!classFoundActive && currentDayId === now.getDay()) {
+          let nextClass = null;
+          let nextPInfo = null;
+
+          for (const pData of byPeriod) {
+            if (currentHour < pData.period.start) {
+              nextPInfo = pData.period;
+              nextClass = pData.classes[0]; // Just take first one if multiple for 'all' group
+              break;
+            }
+          }
+
+          // If there's a next class and it starts within 6 hours from now
+          if (nextClass && nextPInfo.start - currentHour <= 6) {
+            const timeDiff = nextPInfo.start - currentHour;
+            const hoursLeft = Math.floor(timeDiff);
+            const minsLeft = Math.floor((timeDiff - hoursLeft) * 60);
+
+            let timeLeftStr = "";
+            if (hoursLeft > 0) timeLeftStr += `بعد ${hoursLeft} ساعة`;
+            if (minsLeft > 0)
+              timeLeftStr +=
+                hoursLeft > 0
+                  ? ` و ${minsLeft} دقيقة`
+                  : `بعد ${minsLeft} دقيقة`;
+            if (timeLeftStr === "") timeLeftStr = "تبدأ الآن!";
+
+            const bannerTitle = document.getElementById("current-class-title");
+            const bannerRoom = document
+              .getElementById("current-class-room")
+              .querySelector("span");
+            const bannerLabel = document.getElementById("current-class-label");
+            const bannerBadge = document.getElementById("current-class-badge");
+
+            document
+              .getElementById("current-class-banner")
+              .classList.remove("hidden");
+            // Give it a distinct color to differentiate from active class
+            document.getElementById("current-class-banner").className =
+              "mb-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/20 animate-fade-in flex items-center justify-between";
+
+            bannerLabel.innerText = "المحاضرة القادمة";
+            bannerTitle.innerText = `${nextClass.sub} (${nextClass.type})`;
+            bannerRoom.innerText = nextClass.room;
+            bannerBadge.innerText = timeLeftStr;
+            bannerBadge.className =
+              "text-[10px] font-black bg-white text-orange-600 mt-2.5 px-3 py-1 rounded-full inline-block shadow-sm";
+            
+            // Hide progress in "Upcoming" mode
+            const progressFill = document.getElementById('widget-progress-fill');
+            if (progressFill) progressFill.style.width = '0%';
+            const progressText = document.getElementById('widget-progress-text');
+            if (progressText) progressText.innerText = 'بانتظار البدء';
+
+          } else {
+            document
+              .getElementById("current-class-banner")
+              .classList.add("hidden");
+          }
+          document
+            .getElementById("current-class-banner")
+            .classList.add("hidden");
+        }
+
+        // Handle "Up Next" Info for Widget
+        let nextClassInfo = null;
+        for (const pData of byPeriod) {
+            if (currentHour < pData.period.start) {
+                nextClassInfo = pData.classes[0];
+                const upNextName = document.getElementById('up-next-name');
+                const upNextTime = document.getElementById('up-next-time');
+                if (upNextName) upNextName.innerText = nextClassInfo.sub;
+                if (upNextTime) upNextTime.innerText = pData.period.time.split(' - ')[0]; // Start time
+                break;
+            }
+        }
+        if (!nextClassInfo) {
+            const upNextName = document.getElementById('up-next-name');
+            if (upNextName) upNextName.innerText = "لا يوجد محاضرات أخرى اليوم";
+        }
+      }
+
+      function renderDesktopGrid() {
+        const container = document.getElementById("desktop-grid-container");
+
+        let html = `
+                <div class="grid grid-cols-[100px_1fr_1fr_1fr_1fr] bg-slate-200 dark:bg-slate-700 gap-[1px] rounded-2xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
+                    <div class="grid-header bg-slate-800 dark:bg-slate-900 border-none flex items-center justify-center"><i class='bx border-2 border-indigo-400 p-1 rounded-lg text-indigo-400 bxs-calendar text-2xl'></i></div>
+                    ${periodsInfo
+                      .map(
+                        (p) => `
+                    <div class="grid-header bg-slate-800 dark:bg-slate-900 border-none flex gap-2 items-center justify-center relative overflow-hidden">
+                        <div class="absolute -right-4 top-1/2 -translate-y-1/2 opacity-5 scale-150"><i class='bx ${p.icon} text-6xl'></i></div>
+                        <div class="flex flex-col">
+                            <span class="font-black">${p.text}</span>
+                            <span class="text-[0.7rem] text-indigo-300 opacity-90 font-medium px-2 py-0.5 bg-indigo-900/50 rounded-md mt-1 border border-indigo-500/20">${p.time}</span>
+                        </div>
+                    </div>`,
+                      )
+                      .join("")}
+            `;
+
+        timetableData
+          .filter((d) => d.id !== 4)
+          .forEach((day) => {
+            const isToday = day.id === currentDayId;
+            const activeDayClass = isToday
+              ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
+              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300";
+
+            html += `
+                    <div class="grid-cell ${activeDayClass} flex flex-col items-center justify-center relative overflow-hidden p-0 border-none transition-colors">
+                        ${isToday ? `<div class="absolute inset-y-0 right-0 w-1.5 bg-indigo-500"></div>` : ""}
+                        <span class="font-black text-lg">${day.name}</span>
+                    </div>
+                `;
+
+            [1, 2, 3, 4].forEach((pNum) => {
+              const cellClasses = rawSchedule.filter(
+                (c) =>
+                  c.day === day.id &&
+                  c.period === pNum &&
+                  (c.group === "all" ||
+                    currentGroup === "all" ||
+                    c.group === currentGroup),
+              );
+
+              html += `<div class="grid-cell bg-white dark:bg-slate-800/80 flex flex-col gap-2 relative border-none">`;
+
+              if (cellClasses.length === 0) {
+                html += `<div class="w-full h-full flex items-center justify-center opacity-[0.05] dark:opacity-10 text-4xl font-black">X</div>`;
+              } else {
+                cellClasses.forEach((cls) => {
+                  const badge =
+                    cls.group === "all"
+                      ? "الكل"
+                      : cls.group === "m1"
+                        ? "م1"
+                        : "م2";
+                  html += `
+                                <div class="theme-dynamic theme-${cls.theme} p-3.5 rounded-2xl shadow-sm text-sm h-full flex flex-col hover:-translate-y-1 hover:shadow-md transition-all border border-l-0 border-t-0 border-b-0">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-[0.6rem] font-bold bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">${badge}</span>
+                                        <span class="text-[0.7rem] font-bold whitespace-nowrap"><i class='bx bx-map opacity-70 text-indigo-500 text-sm'></i> ${cls.room}</span>
+                                    </div>
+                                    <div class="font-black text-sm mb-1 leading-snug tracking-wide">${cls.sub} <span class="text-[0.65rem] font-bold opacity-80 inline-block px-1.5 py-0.5 bg-black/5 dark:bg-white/5 rounded mx-1">${cls.type}</span></div>
+                                    <div class="mt-auto pt-2 text-[0.7rem] font-bold opacity-80 flex items-center gap-1.5 line-clamp-1"><i class='bx bxs-user p-0.5 rounded-full border border-current opacity-70 text-[0.55rem]'></i> ${cls.prof}</div>
+                                </div>
+                            `;
+                });
+              }
+              html += `</div>`;
+            });
+          });
+
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      // --- Bottom Sheets Components ---
+        function renderSettingsBox() {
+            return `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-black text-xl text-[var(--text-main)] flex items-center gap-2"><i class='bx bx-slider-alt text-[var(--accent)]'></i> الإعدادات</h3>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] opacity-80 mb-3 px-1">اختر الطابع (Theme)</p>
+                        <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 pt-1">
+                            <button onclick="setTheme('glass')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                                <div class="w-14 h-14 rounded-2xl bg-white border-2 ${currentTheme === 'glass' ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-slate-200'} shadow-sm flex items-center justify-center overflow-hidden relative">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-50"></div>
+                                    <i class='bx bx-shape-square text-indigo-500 relative z-10'></i>
+                                </div>
+                                <span class="text-[10px] font-bold opacity-60">Glass</span>
+                            </button>
+                            <button onclick="setTheme('cockpit')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                                <div class="w-14 h-14 rounded-2xl bg-[#050a05] border-2 ${currentTheme === 'cockpit' ? 'border-orange-500 ring-4 ring-orange-500/20' : 'border-slate-700'} shadow-sm flex items-center justify-center overflow-hidden relative">
+                                    <i class='bx bxs-plane-take-off text-green-500'></i>
+                                </div>
+                                <span class="text-[10px] font-bold opacity-60">Cockpit</span>
+                            </button>
+                            <button onclick="setTheme('cyber')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                                <div class="w-14 h-14 rounded-2xl bg-black border-2 ${currentTheme === 'cyber' ? 'border-cyan-400 ring-4 ring-cyan-400/20' : 'border-slate-800'} shadow-sm flex items-center justify-center overflow-hidden relative">
+                                    <div class="absolute inset-0 bg-gradient-to-tr from-purple-900/20 to-cyan-900/20"></div>
+                                    <i class='bx bxs-zap text-cyan-400 relative z-10'></i>
+                                </div>
+                                <span class="text-[10px] font-bold opacity-60">Cyber</span>
+                            </button>
+                            <button onclick="setTheme('pastel')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                                <div class="w-14 h-14 rounded-2xl bg-[#fff1f2] border-2 ${currentTheme === 'pastel' ? 'border-rose-500 ring-4 ring-rose-500/20' : 'border-rose-100'} shadow-sm flex items-center justify-center overflow-hidden relative">
+                                    <i class='bx bxs-heart text-rose-500'></i>
+                                </div>
+                                <span class="text-[10px] font-bold opacity-60">Pastel</span>
+                            </button>
+                            <button onclick="setTheme('rose')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                                <div class="w-14 h-14 rounded-2xl bg-[#f3e8ff] border-2 ${currentTheme === 'rose' ? 'border-purple-500 ring-4 ring-purple-500/20' : 'border-purple-100'} shadow-sm flex items-center justify-center overflow-hidden relative">
+                                    <i class='bx bxs-magic-wand text-purple-500'></i>
+                                </div>
+                                <span class="text-[10px] font-bold opacity-60">Rose</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] opacity-80 mb-3 px-1">اختيار المجموعة</p>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="setGroup('all')" class="p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border group ${currentGroup === 'all' ? 'border-[var(--accent)] bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] shadow-sm' : 'border-[var(--border-color)] bg-white/5 dark:bg-black/5 text-slate-700 dark:text-slate-300'}">
+                            <span class="flex items-center gap-3">عرض كل المجموعات</span>
+                            ${currentGroup === 'all' ? "<i class='bx bxs-check-circle text-2xl text-[var(--accent)]'></i>" : "<i class='bx bx-circle text-2xl opacity-20'></i>"}
+                        </button>
+                        <button onclick="setGroup('m1')" class="p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border group ${currentGroup === 'm1' ? 'border-[var(--accent)] bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] shadow-sm' : 'border-[var(--border-color)] bg-white/5 dark:bg-black/5 text-slate-700 dark:text-slate-300'}">
+                            <span class="flex items-center gap-3">المجموعة الأولى (م1) فقط</span>
+                            ${currentGroup === 'm1' ? "<i class='bx bxs-check-circle text-2xl text-[var(--accent)]'></i>" : "<i class='bx bx-circle text-2xl opacity-20'></i>"}
+                        </button>
+                        <button onclick="setGroup('m2')" class="p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border group ${currentGroup === 'm2' ? 'border-[var(--accent)] bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] shadow-sm' : 'border-[var(--border-color)] bg-white/5 dark:bg-black/5 text-slate-700 dark:text-slate-300'}">
+                            <span class="flex items-center gap-3">المجموعة الثانية (م2) فقط</span>
+                            ${currentGroup === 'm2' ? "<i class='bx bxs-check-circle text-2xl text-[var(--accent)]'></i>" : "<i class='bx bx-circle text-2xl opacity-20'></i>"}
+                        </button>
+                    </div>
+
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] opacity-80 mb-3 px-1 mt-6">الخيارات الإضافية</p>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <button onclick="shareSchedule()" class="w-full bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 p-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 active:scale-95 transition-all outline-none">
+                            <i class='bx bx-share-alt text-2xl text-indigo-500'></i>
+                            <span class="text-sm">مشاركة اليوم</span>
+                        </button>
+                        <button onclick="requestPushPermission()" id="push-btn" class="w-full bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 p-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 active:scale-95 transition-all outline-none relative">
+                            <i class='bx bx-bell text-2xl text-amber-500'></i>
+                            <span class="text-sm">تفعيل الإشعارات</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+      window.renderTasksBoxDirectly = function() {
+        const content = document.getElementById("tab-tasks");
+        if (content && content.classList.contains("block") && document.getElementById("new-task-input")) {
+            content.innerHTML = renderTasksBox();
+        }
+      };
+
+      window.dismissAnnouncement = function(id) {
+          localStorage.setItem('viewed_ann_' + id, 'true');
+          document.getElementById('announcement-banner').classList.add('hidden');
+      };
+
+      window.renderAnnouncements = function() {
+          const container = document.getElementById('announcement-banner');
+          const anns = window.globalAnnouncements || [];
+          if(anns.length === 0) {
+              container.classList.add('hidden');
+              return;
+          }
+          
+          const topAnn = anns[0]; 
+          const colors = { info: 'blue', warning: 'orange', urgent: 'red' };
+          const icons = { info: 'bx-info-circle', warning: 'bx-error', urgent: 'bx-error-alt' };
+          const cTheme = colors[topAnn.type] || 'blue';
+          const cIcon = icons[topAnn.type] || 'bx-info-circle';
+
+          const isViewed = localStorage.getItem('viewed_ann_' + topAnn.id);
+
+          if(!isViewed) {
+               container.innerHTML = `
+                  <div class="bg-${cTheme}-500 text-white p-4 rounded-2xl shadow-lg shadow-${cTheme}-500/30 flex justify-between items-start animate-slide-up relative overflow-hidden">
+                      <div class="absolute inset-0 bg-white/10 rotate-12 -translate-y-full animate-pulse-slow pointer-events-none"></div>
+                      <div class="flex items-start gap-4 z-10 w-full pr-2">
+                          <div class="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                              <i class='bx ${cIcon} text-2xl'></i>
+                          </div>
+                          <div class="w-full">
+                              <h3 class="font-black text-lg mb-1">${topAnn.title}</h3>
+                              <p class="font-bold text-sm opacity-90 leading-tight">${topAnn.body}</p>
+                          </div>
+                      </div>
+                      <button onclick="dismissAnnouncement('${topAnn.id}')" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition flex-shrink-0 z-10 mr-2"><i class='bx bx-x text-2xl'></i></button>
+                  </div>
+              `;
+              container.classList.remove('hidden');
+          } else {
+              container.classList.add('hidden');
+          }
+      };
+
+      function renderTasksBox() {
+        let localTasks = JSON.parse(localStorage.getItem("study_tasks") || "[]");
+        let globalTasks = window.globalTasksList || [];
+
+        let listHtml = "";
+
+        if(globalTasks.length === 0 && localTasks.length === 0) {
+           listHtml = `<div class="py-12 flex flex-col items-center opacity-70"><i class='bx bx-check-double text-5xl mb-3 text-emerald-500'></i><p class="font-black">كل المهام منجزة!</p><p class="text-xs font-bold opacity-75 mt-1">يمكنك إضافة التكليفات القادمة هنا.</p></div>`;
+        }
+
+        // Render Global Tasks (Cannot be deleted by student)
+        globalTasks.forEach((t, i) => {
+            listHtml += `
+                <div class="flex justify-between items-center bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-800/50 mb-3 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-10 h-10 bg-indigo-500/10 rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                    <div class="flex items-center gap-3 relative z-10">
+                        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                        <div class="flex flex-col">
+                            <span class="font-black text-sm text-indigo-900 dark:text-indigo-300">${t.text}</span>
+                            <span class="text-[0.65rem] font-bold text-indigo-500 mt-1 uppercase tracking-wider">مهمة عامة 🔒</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Render Local Tasks
+        localTasks.forEach((t, i) => {
+            listHtml += `
+                    <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-3 group transition-transform hover:-translate-y-0.5" style="animation-delay: ${(globalTasks.length + i) * 0.05}s">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-slate-400"></div>
+                            <span class="font-bold text-sm">${t}</span>
+                        </div>
+                        <button onclick="deleteTask(${i})" class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 flex items-center justify-center active:scale-90 transition lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-200"><i class='bx bx-trash'></i></button>
+                    </div>
+                `;
+        });
+
+        return `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-black text-xl flex items-center gap-2"><i class='bx bx-task text-indigo-500'></i> المهام و التكليفات</h3>
+                    <span class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 px-4 py-1.5 rounded-full text-xs font-black shadow-inner shadow-indigo-500/20">${localTasks.length + globalTasks.length} مهام نشطة</span>
+                </div>
+                
+                <div class="flex gap-2 mb-6">
+                    <div class="relative w-full">
+                        <input type="text" id="new-task-input" placeholder="أضف مهمتك الشخصية..." class="w-full bg-slate-100 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 rounded-2xl px-5 text-sm font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none h-14" onkeypress="if(event.key === 'Enter') addTask()">
+                    </div>
+                    <button onclick="addTask()" class="bg-indigo-600 text-white h-14 w-14 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform"><i class='bx bx-plus text-2xl'></i></button>
+                </div>
+                
+                <div id="tasks-list-container" class="max-h-[350px] overflow-y-auto pr-1 hide-scrollbar -mx-2 px-2">
+                    ${listHtml}
+                </div>
+            `;
+      }
+
+      function switchTab(tabId) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(el => {
+            el.classList.remove('block');
+            el.classList.add('hidden');
+        });
+
+        // Toggle visibility
+        const target = document.getElementById('tab-' + tabId);
+        if (target) {
+            target.classList.remove('hidden');
+            target.classList.add('block');
+        }
+
+        // Handle active state for Bottom Nav (Mobile)
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const secondaryTabs = ['tasks', 'materials', 'settings', 'contact'];
+        const navTab = secondaryTabs.includes(tabId) ? 'more' : tabId;
+        const activeNav = document.getElementById('nav-' + navTab);
+        if (activeNav) {
+            activeNav.classList.add('active');
+        }
+
+        // Handle Desktop Nav active state
+        document.querySelectorAll('.desktop-btn').forEach(btn => {
+            btn.classList.add('bg-[var(--badge-bg)]');
+            btn.classList.remove('bg-[var(--accent)]', 'text-white');
+        });
+        const activeDesktopBtn = document.getElementById('desktop-nav-' + tabId);
+        if (activeDesktopBtn) {
+            activeDesktopBtn.classList.remove('bg-[var(--badge-bg)]');
+            activeDesktopBtn.classList.add('bg-[var(--accent)]', 'text-white');
+        }
+
+        // Scrolling and initialization
+        if (tabId === 'schedule') {
+            window.scrollTo(0,0);
+        } else if (tabId === 'settings') {
+            document.getElementById('tab-settings').innerHTML = renderSettingsBox();
+        } else if (tabId === 'tasks') {
+            document.getElementById('tab-tasks').innerHTML = renderTasksBox();
+        } else if (tabId === 'materials') {
+            if (window.initMaterialsTab) window.initMaterialsTab();
+        } else if (tabId === 'exams') {
+            if (window.initExamsTab) window.initExamsTab();
+        } else if (tabId === 'assistant') {
+            if (window.loadChatHistory) window.loadChatHistory();
+        }
+      }
+
+      function closeSheets() {
+          // Backward compatibility for anywhere that called closeSheets (e.g., when clicking Group buttons)
+          switchTab('schedule');
+      }
+
+      // --- Tasks System ---
+      function addTask() {
+        const input = document.getElementById("new-task-input");
+        const val = input.value.trim();
+        if (!val) return;
+        const tasks = JSON.parse(localStorage.getItem("study_tasks") || "[]");
+        tasks.push(val);
+        localStorage.setItem("study_tasks", JSON.stringify(tasks));
+        document.getElementById("tab-tasks").innerHTML = renderTasksBox();
+        updateTaskIndicators();
+        showToast("تم إضافة التكليف بنجاح", "bx-check-circle", "emerald");
+      }
+
+      function deleteTask(idx) {
+        const tasks = JSON.parse(localStorage.getItem("study_tasks") || "[]");
+        tasks.splice(idx, 1);
+        localStorage.setItem("study_tasks", JSON.stringify(tasks));
+        document.getElementById("tab-tasks").innerHTML = renderTasksBox();
+        updateTaskIndicators();
+        showToast("تم حذف التكليف", "bx-trash", "red");
+      }
+
+      function updateTaskIndicators() {
+        const localTasks = JSON.parse(localStorage.getItem("study_tasks") || "[]");
+        const globalTasks = window.globalTasksList || [];
+        const display = (localTasks.length > 0 || globalTasks.length > 0) ? "inline-block" : "none";
+        const mobileDot = document.getElementById("mobile-task-dot");
+        const desktopDot = document.getElementById("desktop-task-dot");
+        if (mobileDot) mobileDot.style.display = display;
+        if (desktopDot) desktopDot.style.display = display;
+      }
+      window.updateTaskIndicatorsLocal = updateTaskIndicators;
+
+      // --- Utilities ---
+      function toggleDarkMode() {
+        // Obsolete in V3 Environment Engine
+        showToast("استخدم 'الطوابع' في الإعدادات لتغيير المظهر", "bx-palette", "indigo");
+      }
+
+      function updateLiveClock() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString("ar-EG", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+        document.getElementById("live-clock").innerText = timeStr;
+        renderMobileClasses();
+      }
+
+      // Appending toast alerts
+      function showToast(message, icon = "bx-check-circle", color = "emerald") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+
+        toast.className = `bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-3 rounded-2xl shadow-xl shadow-${color}-500/20 border-r-4 border-${color}-500 flex items-center justify-between gap-3 transform -translate-y-10 opacity-0 transition-all duration-300 font-bold text-sm pointer-events-auto`;
+        toast.innerHTML = `<div class="flex items-center gap-3"><i class='bx ${icon} text-2xl text-${color}-500'></i> <span>${message}</span></div>`;
+
+        container.appendChild(toast);
+
+        // Reflow and animate in
+        void toast.offsetWidth;
+        toast.classList.remove("-translate-y-10", "opacity-0");
+
+        // Clean up later
+        setTimeout(() => {
+          toast.classList.add("-translate-y-10", "opacity-0", "scale-95");
+          setTimeout(() => toast.remove(), 300);
+        }, 2500);
+      }
+
+
+
+      // --- Awesome New Features ---
+
+      function shareSchedule() {
+        closeSheets();
+        const todayClasses = rawSchedule.filter(
+          (c) =>
+            c.day === currentDayId &&
+            (c.group === "all" ||
+              c.group === currentGroup ||
+              currentGroup === "all"),
+        );
+        const dayName = timetableData.find((d) => d.id === currentDayId).name;
+
+        if (todayClasses.length === 0) {
+          showToast(
+            `لا توجد محاضرات في يوم ${dayName}`,
+            "bx-coffee-togo",
+            "indigo",
+          );
+          return;
+        }
+
+        let text = `📅 جدول اليوم (${dayName}):\n\n`;
+        todayClasses.forEach((c) => {
+          const pTime = periodsInfo.find((p) => p.num === c.period).time;
+          text += `⏰ ${pTime}\n📚 ${c.sub} (${c.type})\n📍 ${c.room}\n\n`;
+        });
+        text += "🌟 مُرسل من الجدول الذكي";
+
+        if (navigator.share) {
+          navigator
+            .share({
+              title: `جدول يوم ${dayName}`,
+              text: text,
+            })
+            .catch((err) => console.log("Share error:", err));
+        } else {
+          navigator.clipboard.writeText(text);
+          showToast("تم نسخ الجدول للحافظة!", "bx-copy", "emerald");
+        }
+      }
+
+      async function requestPushPermission() {
+        closeSheets();
+        if (!("Notification" in window)) {
+          showToast("متصفحك لا يدعم الإشعارات", "bx-error", "red");
+          return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            showToast("جاري التفعيل (يستغرق بضع ثوان)...", "bx-loader-alt bx-spin", "indigo");
+            
+            try {
+                const swRegistration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
+                
+                const currentToken = await window.firebaseGetToken(window.firebaseMessaging, {
+                   vapidKey: "BCzd4QBq-jqUFAwVSapwju6ChWlM2qrevRnuifMPhXlo5bOoZtp0yaFqKqsYCQsck__YfczXLpgaxLP5GXtHY4U",
+                   serviceWorkerRegistration: swRegistration
+                });
+
+                if (currentToken) {
+                    console.log("Your FCM Token:", currentToken);
+                    showToast("تم تفعيل إشعارات المحاضرات!", "bx-bell-ring", "amber");
+                    const btn = document.getElementById("push-btn");
+                    if(btn) {
+                        btn.classList.add("opacity-50", "pointer-events-none");
+                        btn.querySelector("span").innerText = "مفعلة";
+                    }
+                } else {
+                    showToast("فشلت عملية التفعيل (No token)", "bx-error", "red");
+                }
+            } catch(e) {
+                console.error("FCM Token Error: ", e);
+                showToast("حدث غير متوقع أثناء الاتصال بالخادم", "bx-error", "red");
+            }
+        } else {
+          showToast("تم رفض الإشعارات", "bx-block", "slate");
+        }
+      }
+
+      // --- Service Worker PWA Registration ---
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./firebase-messaging-sw.js")
+            .then((registration) =>
+              console.log("SW Registered!", registration.scope),
+            )
+            .catch((err) => console.log("SW Fail:", err));
+        });
+      }
+    </script>
+
+    <!-- Tutorial Logic (runs after DOM is ready) -->
+    <script>
+      const TUTORIAL_STEPS = [
+        {
+          icon: 'bx bxs-graduation',
+          iconBg: 'linear-gradient(135deg,#6366f1,#818cf8)',
+          title: 'مرحباً بك في الجدول الذكي! 🎉',
+          body: 'جدول محاضرات نظم معلومات الطيران - المستوى الثاني. يُحدَّث تلقائياً من السحابة بدون أي تدخل منك!'
+        },
+        {
+          icon: 'bx bxs-calendar',
+          iconBg: 'linear-gradient(135deg,#0ea5e9,#22d3ee)',
+          title: 'الجدول الأسبوعي 📅',
+          body: 'تصفّح جدول اليوم بسهولة. اختر مجموعتك (م1 أو م2) من الإعدادات وسيُرشّح الجدول تلقائياً لك.'
+        },
+        {
+          icon: 'bx bx-bot',
+          iconBg: 'linear-gradient(135deg,#6366f1,#06b6d4)',
+          title: 'شات المساعد الذكي 🤖',
+          body: 'اسأل Gemini عن أي شيء في جدولك أو استفسر عن المواد. مساعدك الشخصي متاح 24/7!'
+        },
+        {
+          icon: 'bx bx-folder-open',
+          iconBg: 'linear-gradient(135deg,#3b82f6,#2563eb)',
+          title: 'مركز ملفات المواد 📂',
+          body: 'تجد هنا كافة المحاضرات (PDF و PPT) والروابط الهامة لكل مادة بشكل منظم وسهل الوصول.'
+        },
+        {
+          icon: 'bx bx-task',
+          iconBg: 'linear-gradient(135deg,#8b5cf6,#a78bfa)',
+          title: 'المهام والتكليفات 📚',
+          body: 'شاهد التكليفات المهمة من الأستاذ، وأضِف تكليفاتك الشخصية التي لن يراها أحد غيرك.'
+        },
+        {
+          icon: 'bx bx-palette',
+          iconBg: 'linear-gradient(135deg,#ec4899,#f43f5e)',
+          title: 'الطوابع والخصوصية 🎨',
+          body: 'غيّر مظهر التطبيق بالكامل من الإعدادات، وفعّل الإشعارات لتصلك التحديثات العاجلة فوراً.'
+        },
+        {
+          icon: 'bx bxs-phone-incoming',
+          iconBg: 'linear-gradient(135deg,#0f172a,#1e293b)',
+          title: 'ثبّته على شاشتك الرئيسية 📲',
+          body: 'افتح المتصفح → اضغط "مشاركة" → "إضافة إلى الشاشة الرئيسية". هيشتغل زي تطبيق أصلي وبدون إنترنت!'
+        }
+      ];
+
+      let tutorialStep = 0;
+
+      function renderTutorialStep() {
+        const step = TUTORIAL_STEPS[tutorialStep];
+        const card = document.getElementById('tutorial-card');
+
+        // Animate out
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+          document.getElementById('tutorial-icon').style.background = step.iconBg;
+          document.getElementById('tutorial-icon').innerHTML = `<i class='${step.icon} text-4xl text-white'></i>`;
+          document.getElementById('tutorial-title').innerText = step.title;
+          document.getElementById('tutorial-body').innerText = step.body;
+
+          // Dots
+          const dots = document.getElementById('tutorial-dots');
+          dots.innerHTML = TUTORIAL_STEPS.map((_, i) =>
+            `<div class="w-2 h-2 rounded-full transition-all duration-300 ${i === tutorialStep ? 'bg-indigo-500 w-6' : 'bg-slate-300'}"></div>`
+          ).join('');
+
+          // Last step: change Next to "ابدأ الآن"
+          if (tutorialStep === TUTORIAL_STEPS.length - 1) {
+            document.getElementById('tutorial-next').innerText = 'ابدأ الآن 🚀';
+            document.getElementById('tutorial-skip').style.display = 'none';
+          }
+
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 200);
+      }
+
+      window.tutorialNext = function() {
+        if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+          tutorialStep++;
+          renderTutorialStep();
+        } else {
+          endTutorial();
+        }
+      };
+
+      window.endTutorial = function() {
+        const overlay = document.getElementById('tutorial-overlay');
+        const card = document.getElementById('tutorial-card');
+        card.style.transform = 'translateY(100%)';
+        setTimeout(() => overlay.classList.add('hidden'), 500);
+        localStorage.setItem('tutorial_done', '1');
+      };
+
+      window.startTutorial = function() {
+        tutorialStep = 0;
+        const overlay = document.getElementById('tutorial-overlay');
+        const card = document.getElementById('tutorial-card');
+        card.style.transition = 'none';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(100%)';
+        document.getElementById('tutorial-skip').style.display = '';
+        document.getElementById('tutorial-next').innerText = 'التالي →';
+        overlay.classList.remove('hidden');
+        renderTutorialStep();
+        setTimeout(() => {
+          card.style.transition = 'transform 0.5s ease-out, opacity 0.2s';
+          card.style.transform = 'translateY(0)';
+        }, 50);
+      };
+
+      // Auto-show on first visit
+      window.addEventListener('load', () => {
+        if (!localStorage.getItem('tutorial_done')) {
+          setTimeout(() => window.startTutorial(), 1200);
+        }
+      });
+    </script>
+  </body>
+</html>
