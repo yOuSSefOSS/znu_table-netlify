@@ -438,11 +438,11 @@
         transition: all 0.2s;
       }
 
-      .desktop-btn:hover {
+      .desktop-btn:not(.text-white):hover {
         background: #e2e8f0;
       }
 
-      .dark .desktop-btn:hover {
+      .dark .desktop-btn:not(.text-white):hover {
         background: #334155;
       }
 
@@ -501,13 +501,23 @@
               onclick="switchTab('schedule')"
               id="desktop-nav-schedule"
               class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--accent)] text-white items-center justify-center desktop-btn transition shadow-md hover:ring-2 ring-[var(--accent)]"
+              title="الجدول"
             >
               <i class="bx bxs-calendar text-xl"></i>
+            </button>
+            <button
+              onclick="switchTab('materials')"
+              id="desktop-nav-materials"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+              title="المواد"
+            >
+              <i class="bx bx-folder-open text-xl"></i>
             </button>
             <button
               onclick="switchTab('tasks')"
               id="desktop-nav-tasks"
               class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+              title="المهام"
             >
               <i class="bx bx-task text-xl"></i>
               <span id="desktop-task-dot" class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 hidden"></span>
@@ -516,13 +526,31 @@
               onclick="switchTab('exams')"
               id="desktop-nav-exams"
               class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+              title="الامتحانات"
             >
               <i class="bx bx-edit-alt text-xl"></i>
+            </button>
+            <button
+              onclick="switchTab('assistant')"
+              id="desktop-nav-assistant"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+              title="المساعد الذكي"
+            >
+              <i class="bx bx-bot text-xl text-indigo-500"></i>
+            </button>
+            <button
+              onclick="switchTab('contact')"
+              id="desktop-nav-contact"
+              class="hidden lg:flex w-10 h-10 rounded-full bg-[var(--badge-bg)] items-center justify-center desktop-btn transition relative border border-[var(--border-color)] hover:ring-2 ring-[var(--accent)]"
+              title="تواصل معنا"
+            >
+              <i class="bx bxl-whatsapp text-xl text-emerald-500"></i>
             </button>
             <button
               onclick="switchTab('settings')"
               id="desktop-nav-settings"
               class="hidden lg:flex w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center desktop-btn transition border border-gray-200 dark:border-slate-700 hover:ring-2 ring-indigo-500"
+              title="الإعدادات"
             >
               <i class="bx bx-slider-alt text-xl"></i>
             </button>
@@ -1009,6 +1037,8 @@
 
       window.globalAnnouncements = [];
       window.globalTasksList = [];
+      window.globalExams = [];
+      window.globalMaterials = [];
 
       async function fetchSchedule() {
          try {
@@ -1041,6 +1071,18 @@
               snapshot.forEach(doc => window.globalTasksList.push({ id: doc.id, ...doc.data() }));
               if (window.renderTasksBoxDirectly) window.renderTasksBoxDirectly();
               if (window.updateTaskIndicatorsLocal) window.updateTaskIndicatorsLocal();
+          });
+
+          onSnapshot(query(collection(db, "exams"), orderBy("date", "asc")), (snapshot) => {
+              window.globalExams = [];
+              snapshot.forEach(doc => window.globalExams.push({ id: doc.id, ...doc.data() }));
+              if (window.initExamsTab && document.getElementById('tab-exams') && document.getElementById('tab-exams').classList.contains('block')) window.initExamsTab();
+          });
+
+          onSnapshot(query(collection(db, "materials"), orderBy("createdAt", "desc")), (snapshot) => {
+              window.globalMaterials = [];
+              snapshot.forEach(doc => window.globalMaterials.push({ id: doc.id, ...doc.data() }));
+              if (window.initMaterialsTab && document.getElementById('tab-materials') && document.getElementById('tab-materials').classList.contains('block')) window.initMaterialsTab();
           });
 
           // Listen to foreground Push Notifications
@@ -1214,45 +1256,26 @@
 
       async function getGeminiResponse(prompt) {
           try {
-              // 1. DISCOVERY: Get all models for this key
-              const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`, { referrerPolicy: 'no-referrer' });
-              const listData = await listRes.json();
-              if (!listData.models) throw new Error("Could not list models");
-
-              // 2. PRIORITIZATION: Sort existing models to prefer Flash/Pro
-              const allNames = listData.models.map(m => m.name);
-              const priority = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.0-pro", "gemini-pro"];
-              const candidates = [];
+              const modelId = "gemini-1.5-flash"; // Use the fastest model directly
+              const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  referrerPolicy: 'no-referrer',
+                  body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+              });
+              const data = await response.json();
               
-              // Add priority models that exist in the account
-              priority.forEach(p => { if (allNames.some(n => n.includes(p))) candidates.push(allNames.find(n => n.includes(p))); });
-              // Add everything else as fallback
-              allNames.forEach(n => { if (!candidates.includes(n) && n.toLowerCase().includes("gemini")) candidates.push(n); });
-
-              // 3. ROTATION: Try each candidate until one isn't 429'd
-              for (const modelId of candidates) {
-                  try {
-                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelId}:generateContent?key=${GEMINI_API_KEY}`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          referrerPolicy: 'no-referrer',
-                          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                      });
-                      const data = await response.json();
-                      
-                      if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
-                          console.log(`✅ Success with ${modelId}`);
-                          return data.candidates[0].content.parts[0].text;
-                      } else if (data && data.error && data.error.status === 'RESOURCE_EXHAUSTED') {
-                          console.warn(`🛑 ${modelId} reached limit. Trying next...`);
-                          continue; 
-                      }
-                  } catch (e) { console.error(`Failed ${modelId}:`, e); }
+              if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
+                  return data.candidates[0].content.parts[0].text;
+              } else if (data && data.error) {
+                  console.error("Gemini API Error:", data.error);
+                  return "❌ عذراً، هناك مشكلة في الموديل: " + data.error.message;
               }
+              return "❌ لم يتم استلام رد صحيح من الموديل.";
           } catch (error) {
-              console.error("Gemini Rotation Error:", error);
+              console.error("Gemini Error:", error);
+              return "❌ عذراً، هناك مشكلة في الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.";
           }
-          return "❌ عذراً، جميع موديلات Gemini مشغولة حالياً أو غير متاحة لهذا المفتاح. يرجى المحاولة مرة أخرى لاحقاً.";
       }
 
       window.sendToAI = async function() {
@@ -1276,6 +1299,9 @@
               Current local time: ${new Date().toLocaleString('ar-EG')}.
               Schedule: ${JSON.stringify(window.rawSchedule || [])}.
               Announcements: ${JSON.stringify(window.globalAnnouncements || [])}.
+              Tasks: ${JSON.stringify(window.globalTasksList || [])}.
+              Exams: ${JSON.stringify(window.globalExams || [])}.
+              Materials: ${JSON.stringify(window.globalMaterials || [])}.
               Instructions: Answer in Arabic (Egyptian dialect is preferred). Be helpful and academic.
           `;
 
