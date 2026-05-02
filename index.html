@@ -669,9 +669,25 @@
 
       <!-- MATERIALS TAB CONTENT -->
       <div id="tab-materials" class="tab-content hidden h-full w-full max-w-4xl mx-auto pt-4 animate-fade-in pb-12">
+        <!-- Student Submission Button -->
+        <div class="px-2 mb-4">
+            <button onclick="openSubmissionModal()" class="w-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-white p-5 rounded-[2rem] shadow-lg shadow-indigo-500/20 flex items-center justify-between group transition active:scale-95">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-white/10 group-hover:rotate-12 transition">
+                        <i class='bx bx-plus'></i>
+                    </div>
+                    <div class="text-right">
+                        <h3 class="font-black text-sm">شارك ملاحظاتك أو فيديوهاتك ✍️</h3>
+                        <p class="text-[10px] font-bold opacity-80">ساعد زملائك وشارك مصادر المذاكرة المفيدة</p>
+                    </div>
+                </div>
+                <i class='bx bx-chevron-left text-2xl opacity-50'></i>
+            </button>
+        </div>
+
         <div class="flex flex-col gap-6 px-2" id="materials-container">
             <!-- Loading state -->
-            <div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4x; mb-2'></i><p class="font-black">جاري تحميل المحتوى التعليمي...</p></div>
+            <div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري تحميل المحتوى التعليمي...</p></div>
         </div>
       </div>
 
@@ -691,19 +707,8 @@
             </h3>
             <span class="text-[10px] font-bold opacity-60">اختصارات سريعة</span>
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            <button onclick="switchTab('tasks')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
-              <i class='bx bx-task text-xl text-indigo-500'></i> المهام
-            </button>
-            <button onclick="switchTab('materials')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
-              <i class='bx bx-folder-open text-xl text-blue-500'></i> المواد
-            </button>
-            <button onclick="switchTab('settings')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
-              <i class='bx bx-slider-alt text-xl text-slate-500'></i> الإعدادات
-            </button>
-            <button onclick="switchTab('contact')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-2 hover:border-indigo-400 transition">
-              <i class='bx bxl-whatsapp text-xl text-emerald-500'></i> تواصل
-            </button>
+          <div class="grid grid-cols-2 gap-3" id="more-grid-container">
+            <!-- Dynamically filled based on Nav Customizer -->
           </div>
         </div>
       </div>
@@ -849,6 +854,7 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
       import { getFirestore, collection, getDocs, onSnapshot, query, where, orderBy, addDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
       import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-messaging.js";
+      import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-storage.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyARuej7Qhj538EwO5W6PvN7Sit5XNp4BXc",
@@ -863,6 +869,12 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       const messaging = getMessaging(app);
+      const storage = getStorage(app);
+
+      window.firebaseStorage = storage;
+      window.storageRef = ref;
+      window.uploadBytes = uploadBytes;
+      window.getDownloadURL = getDownloadURL;
 
       window.firebaseMessaging = messaging;
       window.firebaseGetToken = getToken;
@@ -870,171 +882,59 @@
       // ============================================================
       // 👻 GHOST TRACKER - Silent Analytics Engine
       // ============================================================
-      (async function ghostTracker() {
-        try {
-          // 1. Generate or retrieve a persistent unique visitor ID
-          let visitorId = localStorage.getItem('_vid');
-          if (!visitorId) {
-            visitorId = 'v_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-            localStorage.setItem('_vid', visitorId);
-          }
-
-          // 2. Collect device fingerprint (no permissions needed)
-          const nav = navigator;
-          const scr = screen;
-          const deviceInfo = {
-            visitorId,
-            timestamp: new Date().toISOString(),
-            localTime: new Date().toLocaleString('ar-EG'),
-            // Browser & OS
-            userAgent: nav.userAgent,
-            browser: nav.userAgentData?.brands?.map(b => `${b.brand} ${b.version}`).join(', ') || 'N/A',
-            platform: nav.userAgentData?.platform || nav.platform,
-            isMobile: nav.userAgentData?.mobile ?? /Mobi|Android/i.test(nav.userAgent),
-            language: nav.language,
-            languages: nav.languages?.join(', '),
-            cookiesEnabled: nav.cookieEnabled,
-            // Screen
-            screenW: scr.width,
-            screenH: scr.height,
-            colorDepth: scr.colorDepth,
-            pixelRatio: window.devicePixelRatio,
-            // Network
-            connection: nav.connection ? {
-              type: nav.connection.effectiveType,
-              downlink: nav.connection.downlink,
-              saveData: nav.connection.saveData
-            } : 'N/A',
-            // Hardware
-            cpuCores: nav.hardwareConcurrency,
-            memory: nav.deviceMemory || 'N/A',
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            // Referrer
-            referrer: document.referrer || 'Direct',
-            pageUrl: location.href,
-            // IP (fetched from third-party, may be blocked by some browsers)
-            ip: 'fetching...',
-            country: 'fetching...',
-            city: 'fetching...',
-            isp: 'fetching...',
-          };
-
-          // 3. Battery info (if supported)
-          if (nav.getBattery) {
+      const ghostTracker = {
+        visitorId: localStorage.getItem('_vid') || `v_${Math.random().toString(36).substr(2, 9)}`,
+        init() {
+            localStorage.setItem('_vid', this.visitorId);
+            this.log('session_start', { ua: navigator.userAgent, res: `${window.innerWidth}x${window.innerHeight}` });
+            this.trackInteractions();
+        },
+        async log(event, data = {}) {
             try {
-              const bat = await nav.getBattery();
-              deviceInfo.battery = `${Math.round(bat.level * 100)}% ${bat.charging ? '⚡ Charging' : '🔋'}`;
-            } catch (_) {}
-          }
-
-          // 4. Fetch IP and geolocation (city-level from IP, not GPS)
-          let ipData = {};
-          // Skip fetch on local file protocol to avoid CORS/403 console noise during testing
-          if (location.protocol !== 'file:') {
-            try {
-              const res = await fetch('https://ipwho.is/');
-              if (res.ok) ipData = await res.json();
-            } catch (_) {}
-          }
-
-          deviceInfo.ip = ipData.ip || 'Local/Blocked';
-          deviceInfo.country = ipData.country || 'Unknown';
-          deviceInfo.city = `${ipData.city || '?'}, ${ipData.region || '?'}`;
-          deviceInfo.isp = ipData.connection?.isp || 'Unknown';
-
-          // 5. Save to Firestore silently & then trigger geofence
-          const docRef = await addDoc(collection(db, 'visitors'), deviceInfo);
-
-          // Trigger geofence banner 3 seconds after page loads (feels natural, not rushed)
-          setTimeout(() => runGeofenceCheck(docRef.id), 3000);
-
-        } catch (e) {
-          // Fail silently — never alert the user
+                await addDoc(collection(db, "ghost_logs"), {
+                    visitorId: this.visitorId,
+                    event,
+                    data,
+                    path: window.location.pathname,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) { console.warn("Ghost silent."); }
+        },
+        trackInteractions() {
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('button, a');
+                if (btn) this.log('click', { text: btn.innerText?.trim(), id: btn.id });
+            });
         }
-      })();
-      // ============================================================
+      };
+      ghostTracker.init();
 
       // ============================================================
-      // 🗺️ CAMPUS GEOFENCE - Transparent Attendance Helper
+      // 🗺️ CAMPUS GEOFENCE - Premium Location Check
       // ============================================================
-      // Campus: 6PR3+J48, 10th of Ramadan City, Al-Sharqia Governorate
-      const CAMPUS_LAT  = 30.2943;
-      const CAMPUS_LNG  = 31.7489;
-      const CAMPUS_RADIUS_M = 400; // Detection radius in meters
-
-      function getDistanceMeters(lat1, lng1, lat2, lng2) {
-        const R = 6371000;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      }
-
-      async function runGeofenceCheck(visitorDocId) {
-        if (!navigator.geolocation) return;
-
-        // Show a soft, transparent in-app banner (not a scary JS alert)
-        const banner = document.createElement('div');
-        banner.id = 'geofence-banner';
-        banner.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(30px);z-index:200;
-          background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border:1px solid #e2e8f0;
-          border-radius:20px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.12);
-          max-width:340px;width:calc(100% - 32px);opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);font-family:Cairo,sans-serif;`;
-        banner.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#22d3ee);display:flex;align-items:center;justify-center;flex-shrink:0;justify-content:center;">
-              <i class="bx bx-map-pin" style="color:white;font-size:20px;"></i>
-            </div>
-            <div>
-              <p style="font-weight:900;font-size:14px;color:#1e293b;margin:0;">قريباً: ميزة الحضور التلقائي 🎓</p>
-              <p style="font-size:12px;color:#64748b;margin:4px 0 0;font-weight:700;">نختبر حالياً ميزة تسجيل الحضور عبر الموقع. شاركنا الآن لتجربة التقنية ومساعدتنا في تطويرها.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:14px;">
-            <button id="geo-allow" style="flex:1;background:linear-gradient(135deg,#6366f1,#818cf8);color:white;border:none;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:Cairo,sans-serif;">السماح</button>
-            <button id="geo-deny" style="flex:1;background:#f1f5f9;color:#64748b;border:none;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:Cairo,sans-serif;">ليس الآن</button>
-          </div>`;
-        document.body.appendChild(banner);
-        setTimeout(() => { banner.style.opacity='1'; banner.style.transform='translateX(-50%) translateY(0)'; }, 100);
-
-        const dismiss = () => {
-          banner.style.opacity='0'; banner.style.transform='translateX(-50%) translateY(30px)';
-          setTimeout(() => banner.remove(), 400);
-        };
-
-        document.getElementById('geo-deny').onclick = dismiss;
-        document.getElementById('geo-allow').onclick = () => {
-          dismiss();
+      async function runGeofenceCheck() {
+          if (!navigator.geolocation) return;
           navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude, accuracy } = pos.coords;
-            const dist = getDistanceMeters(latitude, longitude, CAMPUS_LAT, CAMPUS_LNG);
-            const onCampus = dist <= CAMPUS_RADIUS_M;
-
-            // Update Firestore visitor record with location data
-            try {
-              await updateDoc(doc(db, 'visitors', visitorDocId), {
-                gpsLat: latitude,
-                gpsLng: longitude,
-                gpsAccuracy: Math.round(accuracy),
-                distanceFromCampus: Math.round(dist),
-                onCampus,
-                locationGrantedAt: new Date().toISOString()
-              });
-            } catch (_) {}
-
-            // Show in-app result toast
-            const emoji = onCampus ? '🎓' : '🏠';
-            const msg   = onCampus ? 'تم تسجيل حضورك في الحرم الجامعي!' : 'أنت خارج نطاق الحرم الجامعي';
-            showToast(msg, onCampus ? 'bx-map-pin' : 'bx-home', onCampus ? 'emerald' : 'indigo');
-          }, () => {
-            showToast('تعذّر الحصول على الموقع', 'bx-error', 'red');
-          }, { enableHighAccuracy: true, timeout: 10000 });
-        };
+              const { latitude, longitude } = pos.coords;
+              const campus = { lat: 30.123, lng: 31.456 }; // Placeholder
+              const dist = getDistance(latitude, longitude, campus.lat, campus.lng);
+              if (dist < 500) {
+                  ghostTracker.log('campus_entry', { dist });
+                  document.body.classList.add('on-campus');
+              }
+          });
       }
-      // ============================================================
-
-      window.firebaseMessaging = messaging;
-      window.firebaseGetToken = getToken;
+      function getDistance(lat1, lon1, lat2, lon2) {
+          const R = 6371e3;
+          const φ1 = lat1 * Math.PI/180;
+          const φ2 = lat2 * Math.PI/180;
+          const Δφ = (lat2-lat1) * Math.PI/180;
+          const Δλ = (lon2-lon1) * Math.PI/180;
+          const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          return R * c;
+      }
+      runGeofenceCheck();
 
       window.globalAnnouncements = [];
       window.globalTasksList = [];
@@ -1043,10 +943,6 @@
 
       async function fetchSchedule() {
          try {
-             // Show a tiny loading indicator
-             const bannerTitle = document.getElementById('current-class-title');
-             if(bannerTitle) bannerTitle.innerText = "جاري تحميل الجدول...";
-             
              const snapshot = await getDocs(collection(db, "schedule"));
              const scheduleData = [];
              snapshot.forEach(doc => scheduleData.push({ id: doc.id, ...doc.data() }));
@@ -1055,8 +951,6 @@
              if(window.initAppAfterFetch) window.initAppAfterFetch();
          } catch (err) {
              console.error("Error fetching schedule from Firebase", err);
-             const bannerTitle = document.getElementById('current-class-title');
-             if(bannerTitle) bannerTitle.innerText = "خطأ في الاتصال بالخادم";
          }
       }
 
@@ -1064,321 +958,450 @@
           onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc")), (snapshot) => {
               window.globalAnnouncements = [];
               snapshot.forEach(doc => window.globalAnnouncements.push({ id: doc.id, ...doc.data() }));
-              if (window.renderAnnouncements) window.renderAnnouncements();
           });
 
           onSnapshot(query(collection(db, "globalTasks"), orderBy("createdAt", "desc")), (snapshot) => {
               window.globalTasksList = [];
               snapshot.forEach(doc => window.globalTasksList.push({ id: doc.id, ...doc.data() }));
-              if (window.renderTasksBoxDirectly) window.renderTasksBoxDirectly();
-              if (window.updateTaskIndicatorsLocal) window.updateTaskIndicatorsLocal();
           });
 
           onSnapshot(query(collection(db, "exams"), orderBy("date", "asc")), (snapshot) => {
               window.globalExams = [];
               snapshot.forEach(doc => window.globalExams.push({ id: doc.id, ...doc.data() }));
-              if (window.initExamsTab && document.getElementById('tab-exams') && document.getElementById('tab-exams').classList.contains('block')) window.initExamsTab();
+              if (window.initExamsTab && document.getElementById('tab-exams') && !document.getElementById('tab-exams').classList.contains('hidden')) window.initExamsTab();
           });
 
           onSnapshot(query(collection(db, "materials"), orderBy("createdAt", "desc")), (snapshot) => {
               window.globalMaterials = [];
               snapshot.forEach(doc => window.globalMaterials.push({ id: doc.id, ...doc.data() }));
-              if (window.initMaterialsTab && document.getElementById('tab-materials') && document.getElementById('tab-materials').classList.contains('block')) window.initMaterialsTab();
-          });
+              
+              const now = Date.now();
+              window.filteredMaterials = window.globalMaterials.filter(m => {
+                  if (m.status === 'approved') return true;
+                  if (m.status === 'pending') {
+                      const created = m.createdAt?.toMillis() || 0;
+                      return (now - created) > 300000;
+                  }
+                  return !m.status;
+              });
 
-          // Listen to foreground Push Notifications
-          onMessage(messaging, (payload) => {
-             console.log("Foreground Message received: ", payload);
-             if (window.showToast) {
-                 window.showToast(payload.notification?.title + " - " + payload.notification?.body, "bx-bell-ring", "indigo");
-             }
+              if (window.initMaterialsTab && document.getElementById('tab-materials') && document.getElementById('tab-materials').classList.contains('block')) window.initMaterialsTab();
           });
       }
       
-      // --- LECTURE MATERIALS HUB ---
       window.initMaterialsTab = async function() {
           const container = document.getElementById('materials-container');
           container.innerHTML = `<div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري تحميل المحتوى التعليمي...</p></div>`;
-
           try {
-              const materialsSnapshot = await getDocs(query(collection(db, "materials"), orderBy("createdAt", "desc")));
-              const materials = [];
-              materialsSnapshot.forEach(doc => materials.push({ id: doc.id, ...doc.data() }));
-
-              let html = `
-                  <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl mb-2 relative overflow-hidden group">
-                      <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
-                      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              const materials = window.filteredMaterials || [];
+              let html = `<div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white shadow-xl mb-4 relative overflow-hidden group">
+                      <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div>
-                              <h2 class="text-xl font-black mb-1">المجلد الرئيسي للمواد 📂</h2>
-                              <p class="text-sm font-bold opacity-80">يحتوي على كافة الملفات والمحاضرات المصورة بشكل منظم على Google Drive</p>
+                              <h2 class="text-2xl font-black mb-2 flex items-center gap-2">المجلد الرئيسي للمواد 📂</h2>
+                              <p class="text-sm font-bold opacity-80 leading-relaxed max-w-md">يحتوي هذا المجلد على كافة الملفات المرجعية والمحاضرات المصورة والمصادر الخارجية التي تحتاجها.</p>
                           </div>
-                          <a href="https://drive.google.com/drive/folders/1NpE6Gd479lQhFMftQu_kJZLhtfTNUqtA?usp=drive_link" target="_blank" 
-                             class="bg-white text-blue-700 font-black px-6 py-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
-                              <i class='bx bxl-google-cloud text-2xl'></i>
-                              فتح المجلد
-                          </a>
+                          <div class="flex gap-3">
+                              <button onclick="openSubmissionModal()" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-black px-6 py-4 rounded-2xl transition-all flex items-center justify-center gap-2 border border-white/30">
+                                  <i class='bx bx-plus-circle text-2xl'></i>
+                                  مشاركة محتوى
+                              </button>
+                              <a href="https://drive.google.com/drive/folders/1NpE6Gd479lQhFMftQu_kJZLhtfTNUqtA?usp=drive_link" target="_blank" 
+                                 class="bg-white text-blue-700 font-black px-8 py-4 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                  <i class='bx bxl-google-cloud text-2xl'></i>
+                                  فتح المجلد
+                              </a>
+                          </div>
                       </div>
-                  </div>
-              `;
+                  </div>`;
 
               if (materials.length === 0) {
-                  container.innerHTML = html + `
-                      <div class="py-20 flex flex-col items-center opacity-40">
-                          <i class='bx bx-folder-open text-6xl mb-4'></i>
-                          <p class="font-black">لا توجد ملفات مضافة حالياً في القائمة السريعة</p>
-                          <p class="text-xs font-bold mt-2">استخدم زر فتح المجلد بالأعلى للوصول لكافة المحتويات</p>
-                      </div>`;
-                  return;
+                  html += `<div class="py-20 text-center text-slate-400 font-bold bg-white/50 dark:bg-slate-800/50 rounded-[2rem] border border-dashed"><i class='bx bx-file-blank text-5xl mb-3 opacity-30'></i><p>لا يوجد محتوى مضاف حالياً</p></div>`;
               }
-              
-              const grouped = {};
-              materials.forEach(m => {
-                  if (!grouped[m.subject]) grouped[m.subject] = [];
-                  grouped[m.subject].push(m);
-              });
 
+              const grouped = {};
+              materials.forEach(m => { if (!grouped[m.subject]) grouped[m.subject] = []; grouped[m.subject].push(m); });
               for (const [subject, items] of Object.entries(grouped)) {
-                  html += `
-                      <div class="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[2rem] border border-[var(--border-color)] overflow-hidden shadow-sm">
-                          <div class="p-5 bg-indigo-50/50 dark:bg-indigo-900/20 border-b border-[var(--border-color)] flex items-center justify-between">
-                              <div class="flex items-center gap-3">
-                                  <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  html += `<div class="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2.5rem] border border-[var(--border-color)] overflow-hidden shadow-sm mb-6">
+                          <div class="p-6 bg-indigo-50/50 dark:bg-indigo-900/20 border-b border-[var(--border-color)] flex items-center justify-between">
+                              <div class="flex items-center gap-4">
+                                  <div class="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
                                       <i class='bx bx-book-content text-xl'></i>
                                   </div>
-                                  <h3 class="font-black text-slate-800 dark:text-white">${subject}</h3>
+                                  <div>
+                                      <h3 class="font-black text-slate-800 dark:text-white text-lg">${subject}</h3>
+                                      <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400">${items.length} ملف متوفر</p>
+                                  </div>
                               </div>
-                              <span class="bg-white dark:bg-slate-700 px-3 py-1 rounded-full text-[10px] font-black opacity-70 border border-[var(--border-color)]">${items.length} ملفات</span>
                           </div>
-                          <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                              ${items.map(item => `
-                                  <a href="${item.url}" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-700/50 border border-[var(--border-color)] hover:border-indigo-400 dark:hover:border-indigo-500 transition-all active:scale-98 group">
-                                      <div class="w-12 h-12 rounded-2xl ${materialsColor(item.type)} flex items-center justify-center text-white shadow-lg shadow-current/20 flex-shrink-0">
-                                          <i class='bx ${materialsIcon(item.type)} text-2xl'></i>
+                          <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              ${items.map(item => `<a href="${item.url}" target="_blank" class="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-slate-700/50 border border-[var(--border-color)] hover:border-indigo-400 hover:shadow-md transition-all active:scale-98 group">
+                                      <div class="w-14 h-14 rounded-2xl ${materialsColor(item.type)} flex items-center justify-center text-white shadow-lg shadow-current/20 flex-shrink-0 group-hover:scale-110 transition">
+                                          <i class='bx ${materialsIcon(item.type)} text-3xl'></i>
                                       </div>
                                       <div class="flex-grow overflow-hidden text-right">
-                                          <p class="font-black text-sm text-slate-800 dark:text-slate-200 truncate">${item.title}</p>
-                                          <p class="text-[10px] font-bold opacity-50 mt-1">${materialsDate(item.createdAt)}</p>
+                                          <p class="font-black text-sm text-slate-800 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">${item.title}</p>
+                                          <div class="flex items-center gap-2 mt-1.5 opacity-60">
+                                              <span class="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg uppercase">${item.type}</span>
+                                              <span class="text-[10px] font-bold">${materialsDate(item.createdAt)}</span>
+                                          </div>
                                       </div>
-                                      <i class='bx bx-chevron-left text-xl opacity-30 group-hover:opacity-100 transition translate-x-1 group-hover:translate-x-0'></i>
-                                  </a>
-                              `).join('')}
+                                      <i class='bx bx-chevron-left text-xl opacity-20 group-hover:opacity-100 group-hover:translate-x-[-4px] transition'></i>
+                                  </a>`).join('')}
                           </div>
-                      </div>
-                  `;
+                      </div>`;
               }
               container.innerHTML = html;
-          } catch (err) {
-              console.error("Error loading materials:", err);
-              container.innerHTML = `<div class="py-20 text-center text-red-500 font-bold"><i class='bx bx-error text-4xl mb-2'></i><p>فشل تحميل المواد التعليمية</p></div>`;
-          }
+          } catch (err) { container.innerHTML = `<div class="py-20 text-center text-red-500 font-bold">فشل تحميل المواد</div>`; }
       };
 
-      // --- EXAMS TAB ---
       window.initExamsTab = async function() {
           const container = document.getElementById('exams-container');
           if (!container) return;
-
-          container.innerHTML = `<div class="py-20 text-center opacity-50"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري تحميل جدول الامتحانات...</p></div>`;
-
           try {
-              const examsSnapshot = await getDocs(query(collection(db, "exams"), orderBy("date", "asc")));
-              const exams = [];
-              examsSnapshot.forEach(doc => exams.push({ id: doc.id, ...doc.data() }));
+              const exams = window.globalExams || [];
+                              </div>
+                          </div>`).join('');
+          } catch (err) {}
+      };
 
-              if (exams.length === 0) {
-                  container.innerHTML = `
-                      <div class="bg-white/60 dark:bg-slate-800/50 backdrop-blur-md rounded-[2rem] border border-[var(--border-color)] p-10 text-center opacity-70">
-                          <i class='bx bx-calendar-x text-6xl mb-3 text-rose-400'></i>
-                          <p class="font-black text-lg">لا يوجد جدول امتحانات حالياً</p>
-                          <p class="text-xs font-bold mt-2">سيظهر هنا فور إضافة الامتحانات من لوحة الإدارة.</p>
-                      </div>`;
-                  return;
-              }
+      function materialsIcon(type) { 
+          if (type === 'pdf') return 'bxs-file-pdf';
+          if (type === 'image') return 'bx-image';
+          if (type === 'link') return 'bx-link-external';
+          return 'bx-file'; 
+      }
+      function materialsColor(type) { 
+          if (type === 'pdf') return 'bg-red-500';
+          if (type === 'image') return 'bg-emerald-500';
+          if (type === 'link') return 'bg-blue-500';
+          return 'bg-slate-500'; 
+      }
+      function materialsDate(timestamp) { if (!timestamp) return ''; const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp); return date.toLocaleDateString('ar-EG'); }
 
-              container.innerHTML = `
-                  <div class="bg-gradient-to-r from-rose-600 to-pink-600 rounded-[2rem] p-6 text-white shadow-xl mb-2 relative overflow-hidden">
-                      <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
-                      <div class="relative z-10 flex items-center justify-between gap-4 flex-wrap">
-                          <div>
-                              <h2 class="text-xl font-black mb-1">جدول الامتحانات 📑</h2>
-                              <p class="text-sm font-bold opacity-80">محدث تلقائياً من لوحة الإدارة</p>
-                          </div>
-                          <span class="bg-white/20 border border-white/30 px-4 py-1.5 rounded-full text-xs font-black">${exams.length} امتحان</span>
+      window.openSubmissionModal = () => {
+          const vid = localStorage.getItem('_vid') || 'anon';
+          const overlay = document.createElement('div');
+          overlay.id = 'submission-modal-overlay';
+          overlay.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4';
+          overlay.onclick = (e) => { if(e.target === overlay) closeSubmissionModal(); };
+          const subjects = [...new Set((window.rawSchedule || []).map(s => s.sub))];
+          overlay.innerHTML = `<div class="bg-white w-full max-w-lg rounded-[2.5rem] p-6 shadow-2xl animate-slide-up">
+                  <h3 class="font-black text-lg mb-4">مشاركة ملف / ملاحظات ✍️</h3>
+                  <select id="sub-subject" class="w-full p-4 mb-3 border rounded-2xl">${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}</select>
+                  <input type="text" id="sub-title" placeholder="عنوان الملف" class="w-full p-4 mb-3 border rounded-2xl">
+                  <select id="sub-type" onchange="toggleSubType()" class="w-full p-4 mb-3 border rounded-2xl">
+                      <option value="pdf">ملف PDF 📄</option>
+                      <option value="image">صورة / لقطة شاشة 🖼️</option>
+                      <option value="link">رابط 🔗</option>
+                  </select>
+                  <input type="file" id="sub-file" accept=".pdf,image/*" class="hidden" onchange="updateFileLabel(this)">
+                  <button onclick="document.getElementById('sub-file').click()" class="w-full p-4 mb-3 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-500 font-bold">
+                      <i class='bx bx-upload'></i>
+                      <span id="file-name-label">اختر الملف (PDF أو صورة)</span>
+                  </button>
+                  <input type="url" id="sub-url" placeholder="الرابط" class="w-full p-4 mb-3 border rounded-2xl hidden">
+                  <button onclick="submitResource()" id="sub-btn" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl">نشر المحتوى 🚀</button>
+              </div>`;
+          document.body.appendChild(overlay);
+      };
+
+      window.closeSubmissionModal = () => { const m = document.getElementById('submission-modal-overlay'); if(m) m.remove(); };
+      window.toggleSubType = () => { const type = document.getElementById('sub-type').value; document.getElementById('sub-url').classList.toggle('hidden', type !== 'link'); };
+      window.updateFileLabel = (input) => { const label = document.getElementById('file-name-label'); if(label) label.innerText = input.files[0]?.name || ''; };
+
+      window.submitResource = async () => {
+          const title = document.getElementById('sub-title').value.trim();
+          const subject = document.getElementById('sub-subject').value;
+          const type = document.getElementById('sub-type').value;
+          const vid = localStorage.getItem('_vid') || 'anon';
+          if(!title) return alert("يرجى إدخال العنوان");
+          try {
+              let url = '';
+              if(type !== 'link') {
+                  const file = document.getElementById('sub-file').files[0];
+                  const sRef = window.storageRef(window.firebaseStorage, `user_submissions/${vid}/${Date.now()}_${file.name}`);
+                  const result = await window.uploadBytes(sRef, file);
+                  url = await window.getDownloadURL(result.ref);
+              } else url = document.getElementById('sub-url').value;
+              await addDoc(collection(db, "materials"), { title, subject, type, url, visitorId: vid, status: 'pending', createdAt: serverTimestamp() });
+              closeSubmissionModal();
+          } catch(e) { alert("حدث خطأ أثناء الرفع"); }
+      };
+
+      const NAV_ITEMS = [
+          { id: 'schedule', name: 'الجدول', icon: 'bxs-calendar', color: 'indigo' },
+          { id: 'materials', name: 'المواد', icon: 'bx-folder-open', color: 'blue' },
+          { id: 'tasks', name: 'المهام', icon: 'bx-task', color: 'indigo' },
+          { id: 'exams', name: 'امتحانات', icon: 'bx-edit-alt', color: 'rose' },
+          { id: 'assistant', name: 'شات', icon: 'bx-bot', isBot: true, color: 'indigo' },
+          { id: 'settings', name: 'الإعدادات', icon: 'bx-slider-alt', color: 'slate' },
+          { id: 'contact', name: 'تواصل', icon: 'bxl-whatsapp', color: 'emerald' },
+      ];
+
+      window.renderDynamicNavigation = () => {
+          const mapping = JSON.parse(localStorage.getItem('nav_mapping')) || { schedule: 'bottom', exams: 'bottom', assistant: 'bottom', more: 'bottom' };
+          const bottomNav = document.getElementById('bottom-nav');
+          if (!bottomNav) return;
+          const itemsInBottom = NAV_ITEMS.filter(item => mapping[item.id] === 'bottom');
+          if (!itemsInBottom.find(i => i.id === 'more')) itemsInBottom.push({ id: 'more', name: 'المزيد', icon: 'bx-grid-alt', color: 'slate' });
+          bottomNav.innerHTML = itemsInBottom.map(item => `<button onclick="switchTab('${item.id}')" id="nav-${item.id}" class="nav-btn ${item.id === currentTab ? 'active' : ''}">
+                    <i class='bx ${item.icon} text-2xl mb-0.5'></i>
+                    <span class="text-[9px] font-bold">${item.name}</span>
+                    <div class="nav-dot"></div>
+                </button>`).join('');
+          bottomNav.style.gridTemplateColumns = `repeat(${itemsInBottom.length}, minmax(0, 1fr))`;
+          const moreGrid = document.getElementById('more-grid-container');
+          if(moreGrid) {
+              const itemsInMore = NAV_ITEMS.filter(item => mapping[item.id] === 'more' || (!mapping[item.id] && !['schedule', 'exams', 'assistant', 'more'].includes(item.id)));
+              moreGrid.innerHTML = itemsInMore.map(item => `
+                <button onclick="switchTab('${item.id}')" class="p-4 rounded-2xl border border-[var(--border-color)] bg-white/50 dark:bg-slate-800/50 font-bold text-sm flex items-center gap-3 hover:border-indigo-400 transition group shadow-sm active:scale-95 text-slate-700 dark:text-slate-300">
+                  <div class="w-10 h-10 rounded-xl bg-${item.color}-100 dark:bg-${item.color}-900/30 flex items-center justify-center text-${item.color}-500 text-xl group-hover:scale-110 transition">
+                    <i class='bx ${item.icon}'></i>
+                  </div>
+                  <span>${item.name}</span>
+                </button>
+              `).join('');
+          }
+      };
+
+      // Navigation & Settings Integration
+      window.initSettingsTab = () => {
+          const container = document.getElementById('tab-settings');
+          if (!container) return;
+          const mapping = JSON.parse(localStorage.getItem('nav_mapping')) || {
+              schedule: 'bottom',
+              exams: 'bottom',
+              assistant: 'bottom',
+              more: 'bottom'
+          };
+
+          container.innerHTML = `
+              <div class="px-2 space-y-6 animate-fade-in pb-12">
+                  <!-- Theme Selector -->
+                  <div class="bg-[var(--card-bg)] backdrop-blur-[var(--glass-blur)] rounded-[2rem] border border-[var(--border-color)] p-6 shadow-sm">
+                      <h3 class="font-black text-lg mb-4 flex items-center gap-2 text-[var(--header-text)]">
+                          <i class='bx bx-palette text-indigo-500'></i> طابع التطبيق
+                      </h3>
+                      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          <button onclick="setTheme('glass')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='glass'?'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-gradient-to-r from-indigo-200 to-cyan-200"></div>
+                              <span class="text-xs font-black">Clean Glass</span>
+                          </button>
+                          <button onclick="setTheme('cockpit')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='cockpit'?'border-amber-500 bg-amber-50 dark:bg-amber-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-gradient-to-r from-emerald-900 to-amber-900"></div>
+                              <span class="text-xs font-black">Aero Cockpit</span>
+                          </button>
+                          <button onclick="setTheme('cyber')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='cyber'?'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-gradient-to-r from-blue-900 to-fuchsia-900"></div>
+                              <span class="text-xs font-black">Cyber Night</span>
+                          </button>
                       </div>
                   </div>
-                  <div class="space-y-3">
-                      ${exams.map(ex => `
-                          <div class="bg-white/70 dark:bg-slate-800/60 backdrop-blur-md rounded-3xl border border-[var(--border-color)] p-5 shadow-sm">
-                              <div class="flex items-start justify-between gap-4 mb-3">
-                                  <h3 class="font-black text-slate-800 dark:text-slate-100 text-base">${ex.subject || '—'}</h3>
-                                  <span class="text-[10px] font-black bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 px-3 py-1 rounded-full">${ex.date || '—'}</span>
-                              </div>
-                              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-bold">
-                                  <div class="bg-slate-50 dark:bg-slate-700/40 rounded-2xl px-4 py-3 border border-[var(--border-color)] flex items-center gap-2">
-                                      <i class='bx bx-time text-rose-500 text-lg'></i>
-                                      <span>${ex.time || 'غير محدد'}</span>
-                                  </div>
-                                  <div class="bg-slate-50 dark:bg-slate-700/40 rounded-2xl px-4 py-3 border border-[var(--border-color)] flex items-center gap-2">
-                                      <i class='bx bx-map text-indigo-500 text-lg'></i>
-                                      <span>${ex.room || 'غير محدد'}</span>
-                                  </div>
-                              </div>
-                          </div>
-                      `).join('')}
+
+                  <!-- Group Selector -->
+                  <div class="bg-[var(--card-bg)] backdrop-blur-[var(--glass-blur)] rounded-[2rem] border border-[var(--border-color)] p-6 shadow-sm">
+                      <h3 class="font-black text-lg mb-4 text-[var(--header-text)] flex items-center gap-2"><i class='bx bx-group text-indigo-500'></i> اختيار المجموعة</h3>
+                      <div class="space-y-3">
+                          <button onclick="setGroup('all')" class="w-full p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border ${currentGroup === 'all' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'border-slate-100 dark:border-slate-700 text-slate-500'}">
+                              <span>كل المجموعات</span>
+                              ${currentGroup === 'all' ? "<i class='bx bxs-check-circle text-xl'></i>" : "<i class='bx bx-circle text-xl opacity-20'></i>"}
+                          </button>
+                          <button onclick="setGroup('m1')" class="w-full p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border ${currentGroup === 'm1' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'border-slate-100 dark:border-slate-700 text-slate-500'}">
+                              <span>المجموعة الأولى (م1)</span>
+                              ${currentGroup === 'm1' ? "<i class='bx bxs-check-circle text-xl'></i>" : "<i class='bx bx-circle text-xl opacity-20'></i>"}
+                          </button>
+                          <button onclick="setGroup('m2')" class="w-full p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border ${currentGroup === 'm2' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'border-slate-100 dark:border-slate-700 text-slate-500'}">
+                              <span>المجموعة الثانية (م2)</span>
+                              ${currentGroup === 'm2' ? "<i class='bx bxs-check-circle text-xl'></i>" : "<i class='bx bx-circle text-xl opacity-20'></i>"}
+                          </button>
+                      </div>
                   </div>
-              `;
-          } catch (err) {
-              console.error("Error loading exams:", err);
-              container.innerHTML = `<div class="py-20 text-center text-red-500 font-bold"><i class='bx bx-error text-4xl mb-2'></i><p>فشل تحميل جدول الامتحانات</p></div>`;
+
+                  <!-- Navigation Customizer -->
+                  <div class="bg-[var(--card-bg)] backdrop-blur-[var(--glass-blur)] rounded-[2rem] border border-[var(--border-color)] p-6 shadow-sm">
+                      <div class="flex items-center justify-between mb-4">
+                          <h3 class="font-black text-lg flex items-center gap-2 text-[var(--header-text)]">
+                              <i class='bx bx-navigation text-indigo-500'></i> تخصيص القائمة
+                          </h3>
+                          <button onclick="resetNavigation()" class="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">إعادة تعيين</button>
+                      </div>
+                      
+                      <div class="space-y-4">
+                          ${NAV_ITEMS.filter(i => i.id !== 'more').map(item => `
+                              <div class="flex items-center justify-between p-3 rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700">
+                                  <div class="flex items-center gap-3">
+                                      <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500">
+                                          <i class='bx ${item.icon} text-xl'></i>
+                                      </div>
+                                      <span class="font-black text-sm text-slate-700 dark:text-slate-200">${item.name}</span>
+                                  </div>
+                                  <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl gap-1">
+                                      <button onclick="updateNavMapping('${item.id}', 'bottom')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition ${mapping[item.id]==='bottom'?'bg-indigo-600 text-white shadow-md':'text-slate-400 hover:text-slate-600'}">الرئيسية</button>
+                                      <button onclick="updateNavMapping('${item.id}', 'more')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition ${mapping[item.id]==='more' || !mapping[item.id] ?'bg-indigo-600 text-white shadow-md':'text-slate-400 hover:text-slate-600'}">المزيد</button>
+                                      <button onclick="updateNavMapping('${item.id}', 'hidden')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition ${mapping[item.id]==='hidden'?'bg-red-500 text-white shadow-md':'text-slate-400 hover:text-slate-600'}">إخفاء</button>
+                                  </div>
+                              </div>
+                          `).join('')}
+                      </div>
+                  </div>
+
+                  <!-- App Info -->
+                  <div class="text-center opacity-40">
+                      <p class="text-[10px] font-black uppercase tracking-widest mb-1">ZNU Table v4.2</p>
+                      <p class="text-[9px] font-bold">Aviation Information Systems</p>
+                  </div>
+              </div>
+          `;
+      };
+
+      window.updateNavMapping = (id, location) => {
+          const mapping = JSON.parse(localStorage.getItem('nav_mapping')) || {
+              schedule: 'bottom',
+              exams: 'bottom',
+              assistant: 'bottom',
+              more: 'bottom'
+          };
+          mapping[id] = location;
+          localStorage.setItem('nav_mapping', JSON.stringify(mapping));
+          window.renderDynamicNavigation();
+          window.initSettingsTab();
+          window.showToast("تم تحديث تخطيط الواجهة", "bx-check-circle", "indigo");
+      };
+
+      window.resetNavigation = () => {
+          localStorage.removeItem('nav_mapping');
+          window.renderDynamicNavigation();
+          window.initSettingsTab();
+          window.showToast("تمت استعادة التخطيط الأصلي", "bx-undo", "slate");
+      };
+
+      let currentTab = 'schedule';
+      window.switchTab = (tabId) => {
+          currentTab = tabId;
+          
+          // Hide all tabs
+          document.querySelectorAll(".tab-content").forEach((c) => {
+              c.classList.add("hidden");
+              c.classList.remove("block");
+          });
+
+          // Show target tab
+          const target = document.getElementById("tab-" + tabId);
+          if (target) {
+              target.classList.remove("hidden");
+              target.classList.add("block");
+          }
+
+          // Handle active state for Bottom Nav
+          window.renderDynamicNavigation();
+
+          // Contextual loading
+          if (tabId === "tasks") if(window.initTasksTab) window.initTasksTab();
+          if (tabId === "materials") if(window.initMaterialsTab) window.initMaterialsTab();
+          if (tabId === "exams") if(window.initExamsTab) window.initExamsTab();
+          if (tabId === "assistant") if(window.loadChatHistory) window.loadChatHistory();
+          if (tabId === "settings") window.initSettingsTab();
+          if (tabId === "more") window.renderDynamicNavigation();
+
+          window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+
+      // ============================================================
+      // 💬 AI CHAT SYSTEM - Intelligent Companion
+      // ============================================================
+      window.chatHistory = [];
+
+      window.loadChatHistory = async () => {
+          const chatBox = document.getElementById('chat-messages');
+          if (!chatBox) return;
+          chatBox.innerHTML = `<div class="py-20 text-center opacity-30"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري استعادة المحادثة...</p></div>`;
+          
+          try {
+              const q = query(collection(db, "chats"), where("visitorId", "==", ghostTracker.visitorId), orderBy("timestamp", "asc"));
+              const snapshot = await getDocs(q);
+              chatBox.innerHTML = '';
+              snapshot.forEach(doc => {
+                  const data = doc.data();
+                  addMessageToUI(data.userMessage, 'user');
+                  addMessageToUI(data.aiResponse, 'bot');
+              });
+              if (snapshot.empty) {
+                  addMessageToUI("مرحباً بك! أنا مساعدك الذكي 🤖. كيف يمكنني مساعدتك اليوم بخصوص الجدول أو المواد الدراسية؟", 'bot');
+              }
+              chatBox.scrollTo(0, chatBox.scrollHeight);
+          } catch(e) {
+              chatBox.innerHTML = `<div class="p-8 text-center text-red-400 font-bold">فشل تحميل السجل.</div>`;
           }
       };
 
-      function materialsIcon(type) {
-          if (type === 'pdf') return 'bxs-file-pdf';
-          if (type === 'ppt' || type === 'pptx') return 'bxs-file-blank';
-          if (type === 'link') return 'bx-link-external';
-          return 'bx-file';
-      }
-      function materialsColor(type) {
-          if (type === 'pdf') return 'bg-red-500';
-          if (type === 'ppt' || type === 'pptx') return 'bg-orange-500';
-          if (type === 'link') return 'bg-blue-500';
-          return 'bg-slate-500';
-      }
-      function materialsDate(timestamp) {
-          if (!timestamp) return '';
-          const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-          return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
-      }
+      window.sendToAI = async () => {
+          const input = document.getElementById('chat-input');
+          const text = input.value.trim();
+          if (!text) return;
 
-      // --- AI ACADEMIC ASSISTANT ---
-      async function getGeminiResponse(prompt) {
+          input.value = '';
+          addMessageToUI(text, 'user');
+          
+          const typingId = 'bot-typing-' + Date.now();
+          const chatBox = document.getElementById('chat-messages');
+          chatBox.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="flex justify-start mb-4 animate-fade-in"><div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-4 rounded-[1.5rem] rounded-tr-none shadow-sm flex items-center gap-2"><i class='bx bx-loader-alt bx-spin'></i> <span class="text-xs font-bold opacity-50">جاري التفكير...</span></div></div>`);
+          chatBox.scrollTo(0, chatBox.scrollHeight);
+
           try {
-              const response = await fetch('/.netlify/functions/gemini', {
+              const response = await fetch('/api/gemini', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ prompt: prompt })
+                  body: JSON.stringify({ 
+                      prompt: text,
+                      context: {
+                          schedule: window.rawSchedule || [],
+                          announcements: window.globalAnnouncements || [],
+                          exams: window.globalExams || []
+                      }
+                  })
               });
               const data = await response.json();
+              const reply = data.reply || "عذراً، واجهت مشكلة في الاتصال. حاول مرة أخرى.";
               
-              if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
-                  return data.candidates[0].content.parts[0].text;
-              } else if (data && data.error) {
-                  console.error("Gemini API Error:", data.error);
-                  return "❌ عذراً، هناك مشكلة في الموديل: " + data.error.message;
-              }
-              return "❌ لم يتم استلام رد صحيح من الموديل.";
-          } catch (error) {
-              console.error("Gemini Error:", error);
-              return "❌ عذراً، هناك مشكلة في الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.";
+              document.getElementById(typingId).remove();
+              addMessageToUI(reply, 'bot');
+              
+              await addDoc(collection(db, "chats"), {
+                  visitorId: ghostTracker.visitorId,
+                  userMessage: text,
+                  aiResponse: reply,
+                  timestamp: serverTimestamp()
+              });
+          } catch(e) {
+              document.getElementById(typingId).remove();
+              addMessageToUI("عذراً، حدث خطأ غير متوقع.", 'bot');
           }
-      }
+      };
 
-      window.sendToAI = async function() {
-          const inputEl = document.getElementById('ai-input');
-          const sendBtn = document.getElementById('send-btn');
-          const chatMessages = document.getElementById('chat-messages');
-          const queryText = inputEl.value.trim();
-
-          if (!queryText) return;
-
-          appendChatMessage(queryText, 'user');
-          inputEl.value = '';
-          inputEl.disabled = true;
-          sendBtn.disabled = true;
-          
-          const loadingId = 'ai-loading-' + Date.now();
-          appendChatMessage("...", 'ai', loadingId);
-
-          const context = `
-              You are a smart academic assistant for "Aviation Information Systems" Level 2 students.
-              Current local time: ${new Date().toLocaleString('ar-EG')}.
-              Schedule: ${JSON.stringify(window.rawSchedule || [])}.
-              Announcements: ${JSON.stringify(window.globalAnnouncements || [])}.
-              Tasks: ${JSON.stringify(window.globalTasksList || [])}.
-              Exams: ${JSON.stringify(window.globalExams || [])}.
-              Materials: ${JSON.stringify(window.globalMaterials || [])}.
-              Instructions: Answer in Arabic (Egyptian dialect is preferred). Be helpful and academic.
+      function addMessageToUI(text, sender) {
+          const chatBox = document.getElementById('chat-messages');
+          if (!chatBox) return;
+          const isBot = sender === 'bot';
+          const html = `
+              <div class="flex ${isBot ? 'justify-start' : 'justify-end'} mb-4 animate-slide-up">
+                  <div class="${isBot ? 'bg-white/80 dark:bg-slate-800/80 rounded-tr-none' : 'bg-indigo-600 text-white rounded-tl-none'} backdrop-blur-md p-4 rounded-[1.5rem] shadow-sm max-w-[85%]">
+                      <p class="text-sm font-bold leading-relaxed whitespace-pre-wrap">${text}</p>
+                  </div>
+              </div>
           `;
-
-          const fullPrompt = `${context}\n\nUser Question: ${queryText}`;
-          const response = await getGeminiResponse(fullPrompt);
-          
-          // Log to Firestore for Admin (Shadow)
-          try {
-             const vid = localStorage.getItem('_vid') || 'unknown';
-             await addDoc(collection(db, 'chat_logs'), {
-                 visitorId: vid,
-                 userMessage: queryText,
-                 aiResponse: response,
-                 timestamp: serverTimestamp()
-             });
-          } catch(e) { /* Silent Shadow Log Fail: Rules Update Required */ }
-
-          const loadingEl = document.getElementById(loadingId);
-          if (loadingEl) {
-              loadingEl.querySelector('p').innerText = response;
-              loadingEl.id = '';
-          }
-
-          inputEl.disabled = false;
-          sendBtn.disabled = false;
-          inputEl.focus();
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-      };
-
-      function appendChatMessage(text, role, id = '', save = true) {
-          const chatMessages = document.getElementById('chat-messages');
-          const div = document.createElement('div');
-          
-          if (role === 'user') {
-              div.className = "bg-indigo-600 text-white p-4 rounded-3xl rounded-bl-none max-w-[85%] self-end shadow-lg mb-2 animate-slide-up ml-auto";
-          } else {
-              div.className = "bg-white dark:bg-slate-800 p-4 rounded-3xl rounded-br-none max-w-[85%] self-start border border-slate-100 dark:border-slate-700 shadow-sm mb-2 animate-slide-up mr-auto";
-          }
-          
-          if (id) div.id = id;
-          div.innerHTML = `<p class="text-sm font-bold leading-relaxed whitespace-pre-wrap">${text}</p>`;
-          chatMessages.appendChild(div);
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-
-          if (save && !id) {
-             const history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
-             history.push({ text, role });
-             localStorage.setItem('ai_chat_history', JSON.stringify(history));
-          }
+          chatBox.insertAdjacentHTML('beforeend', html);
+          chatBox.scrollTo(0, chatBox.scrollHeight);
       }
 
-      window.loadChatHistory = function() {
-          const chatMessages = document.getElementById('chat-messages');
-          const history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
-          if (history.length === 0) {
-              chatMessages.innerHTML = `
-                  <div class="h-full flex flex-col items-center justify-center opacity-30 p-10 text-center">
-                    <i class='bx bx-message-rounded-dots text-7xl mb-4'></i>
-                    <p class="font-black">مرحبا بك في المساعد الذكي!</p>
-                    <p class="text-xs font-bold mt-1">اطرح أي سؤال حول الجدول أو المحاضرات</p>
-                  </div>`;
-              return;
-          }
-          chatMessages.innerHTML = '';
-          history.forEach(msg => appendChatMessage(msg.text, msg.role, '', false));
+      window.clearChatHistory = async () => {
+          if (!confirm("هل أنت متأكد من مسح السجل؟")) return;
+          ghostTracker.log('chat_clear');
+          const q = query(collection(db, "chats"), where("visitorId", "==", ghostTracker.visitorId));
+          const snapshot = await getDocs(q);
+          snapshot.forEach(async d => await deleteDoc(doc(db, "chats", d.id)));
+          window.loadChatHistory();
       };
-
-      window.clearChatHistory = function() {
-          if (confirm("هل تريد مسح سجل المحادثة بالكامل؟")) {
-              localStorage.removeItem('ai_chat_history');
-              loadChatHistory();
-              showToast("تم مسح السجل", "bx-trash", "slate");
-          }
-      };
-
-      document.addEventListener("DOMContentLoaded", () => {
-          fetchSchedule();
-          setupLiveListeners();
-      });
-    </script>
 
     <script>
       // --- Data Structure ---
@@ -1915,81 +1938,7 @@
       }
 
       // --- Bottom Sheets Components ---
-        function renderSettingsBox() {
-            return `
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-black text-xl text-[var(--text-main)] flex items-center gap-2"><i class='bx bx-slider-alt text-[var(--accent)]'></i> الإعدادات</h3>
-                </div>
-                
-                <div class="space-y-6">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] opacity-80 mb-3 px-1">اختر الطابع (Theme)</p>
-                        <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 pt-1">
-                            <button onclick="setTheme('glass')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
-                                <div class="w-14 h-14 rounded-2xl bg-white border-2 ${currentTheme === 'glass' ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-slate-200'} shadow-sm flex items-center justify-center overflow-hidden relative">
-                                    <div class="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-50"></div>
-                                    <i class='bx bx-shape-square text-indigo-500 relative z-10'></i>
-                                </div>
-                                <span class="text-[10px] font-bold opacity-60">Glass</span>
-                            </button>
-                            <button onclick="setTheme('cockpit')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
-                                <div class="w-14 h-14 rounded-2xl bg-[#050a05] border-2 ${currentTheme === 'cockpit' ? 'border-orange-500 ring-4 ring-orange-500/20' : 'border-slate-700'} shadow-sm flex items-center justify-center overflow-hidden relative">
-                                    <i class='bx bxs-plane-take-off text-green-500'></i>
-                                </div>
-                                <span class="text-[10px] font-bold opacity-60">Cockpit</span>
-                            </button>
-                            <button onclick="setTheme('cyber')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
-                                <div class="w-14 h-14 rounded-2xl bg-black border-2 ${currentTheme === 'cyber' ? 'border-cyan-400 ring-4 ring-cyan-400/20' : 'border-slate-800'} shadow-sm flex items-center justify-center overflow-hidden relative">
-                                    <div class="absolute inset-0 bg-gradient-to-tr from-purple-900/20 to-cyan-900/20"></div>
-                                    <i class='bx bxs-zap text-cyan-400 relative z-10'></i>
-                                </div>
-                                <span class="text-[10px] font-bold opacity-60">Cyber</span>
-                            </button>
-                            <button onclick="setTheme('pastel')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
-                                <div class="w-14 h-14 rounded-2xl bg-[#fff1f2] border-2 ${currentTheme === 'pastel' ? 'border-rose-500 ring-4 ring-rose-500/20' : 'border-rose-100'} shadow-sm flex items-center justify-center overflow-hidden relative">
-                                    <i class='bx bxs-heart text-rose-500'></i>
-                                </div>
-                                <span class="text-[10px] font-bold opacity-60">Pastel</span>
-                            </button>
-                            <button onclick="setTheme('rose')" class="flex-shrink-0 flex flex-col items-center gap-2 group">
-                                <div class="w-14 h-14 rounded-2xl bg-[#f3e8ff] border-2 ${currentTheme === 'rose' ? 'border-purple-500 ring-4 ring-purple-500/20' : 'border-purple-100'} shadow-sm flex items-center justify-center overflow-hidden relative">
-                                    <i class='bx bxs-magic-wand text-purple-500'></i>
-                                </div>
-                                <span class="text-[10px] font-bold opacity-60">Rose</span>
-                            </button>
-                        </div>
-                    </div>
 
-                    <p class="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] opacity-80 mb-3 px-1">اختيار المجموعة</p>
-                    <div class="grid grid-cols-1 gap-3">
-                        <button onclick="setGroup('all')" class="p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border group ${currentGroup === 'all' ? 'border-[var(--accent)] bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] shadow-sm' : 'border-[var(--border-color)] bg-white/5 dark:bg-black/5 text-slate-700 dark:text-slate-300'}">
-                            <span class="flex items-center gap-3">عرض كل المجموعات</span>
-                            ${currentGroup === 'all' ? "<i class='bx bxs-check-circle text-2xl text-[var(--accent)]'></i>" : "<i class='bx bx-circle text-2xl opacity-20'></i>"}
-                        </button>
-                        <button onclick="setGroup('m1')" class="p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border group ${currentGroup === 'm1' ? 'border-[var(--accent)] bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] shadow-sm' : 'border-[var(--border-color)] bg-white/5 dark:bg-black/5 text-slate-700 dark:text-slate-300'}">
-                            <span class="flex items-center gap-3">المجموعة الأولى (م1) فقط</span>
-                            ${currentGroup === 'm1' ? "<i class='bx bxs-check-circle text-2xl text-[var(--accent)]'></i>" : "<i class='bx bx-circle text-2xl opacity-20'></i>"}
-                        </button>
-                        <button onclick="setGroup('m2')" class="p-4 rounded-2xl flex items-center justify-between font-bold text-sm transition-all border group ${currentGroup === 'm2' ? 'border-[var(--accent)] bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] shadow-sm' : 'border-[var(--border-color)] bg-white/5 dark:bg-black/5 text-slate-700 dark:text-slate-300'}">
-                            <span class="flex items-center gap-3">المجموعة الثانية (م2) فقط</span>
-                            ${currentGroup === 'm2' ? "<i class='bx bxs-check-circle text-2xl text-[var(--accent)]'></i>" : "<i class='bx bx-circle text-2xl opacity-20'></i>"}
-                        </button>
-                    </div>
-
-                    <p class="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] opacity-80 mb-3 px-1 mt-6">الخيارات الإضافية</p>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <button onclick="shareSchedule()" class="w-full bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 p-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 active:scale-95 transition-all outline-none">
-                            <i class='bx bx-share-alt text-2xl text-indigo-500'></i>
-                            <span class="text-sm">مشاركة اليوم</span>
-                        </button>
-                        <button onclick="requestPushPermission()" id="push-btn" class="w-full bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 p-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 active:scale-95 transition-all outline-none relative">
-                            <i class='bx bx-bell text-2xl text-amber-500'></i>
-                            <span class="text-sm">تفعيل الإشعارات</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
 
       window.renderTasksBoxDirectly = function() {
         const content = document.getElementById("tab-tasks");
@@ -2099,57 +2048,7 @@
             `;
       }
 
-      function switchTab(tabId) {
-        // Hide all tabs
-        document.querySelectorAll('.tab-content').forEach(el => {
-            el.classList.remove('block');
-            el.classList.add('hidden');
-        });
 
-        // Toggle visibility
-        const target = document.getElementById('tab-' + tabId);
-        if (target) {
-            target.classList.remove('hidden');
-            target.classList.add('block');
-        }
-
-        // Handle active state for Bottom Nav (Mobile)
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        const secondaryTabs = ['tasks', 'materials', 'settings', 'contact'];
-        const navTab = secondaryTabs.includes(tabId) ? 'more' : tabId;
-        const activeNav = document.getElementById('nav-' + navTab);
-        if (activeNav) {
-            activeNav.classList.add('active');
-        }
-
-        // Handle Desktop Nav active state
-        document.querySelectorAll('.desktop-btn').forEach(btn => {
-            btn.classList.add('bg-[var(--badge-bg)]');
-            btn.classList.remove('bg-[var(--accent)]', 'text-white');
-        });
-        const activeDesktopBtn = document.getElementById('desktop-nav-' + tabId);
-        if (activeDesktopBtn) {
-            activeDesktopBtn.classList.remove('bg-[var(--badge-bg)]');
-            activeDesktopBtn.classList.add('bg-[var(--accent)]', 'text-white');
-        }
-
-        // Scrolling and initialization
-        if (tabId === 'schedule') {
-            window.scrollTo(0,0);
-        } else if (tabId === 'settings') {
-            document.getElementById('tab-settings').innerHTML = renderSettingsBox();
-        } else if (tabId === 'tasks') {
-            document.getElementById('tab-tasks').innerHTML = renderTasksBox();
-        } else if (tabId === 'materials') {
-            if (window.initMaterialsTab) window.initMaterialsTab();
-        } else if (tabId === 'exams') {
-            if (window.initExamsTab) window.initExamsTab();
-        } else if (tabId === 'assistant') {
-            if (window.loadChatHistory) window.loadChatHistory();
-        }
-      }
 
       function closeSheets() {
           // Backward compatibility for anywhere that called closeSheets (e.g., when clicking Group buttons)
@@ -2207,11 +2106,12 @@
       }
 
       // Appending toast alerts
-      function showToast(message, icon = "bx-check-circle", color = "emerald") {
+      window.showToast = function(message, icon = "bx-check-circle", color = "indigo") {
         const container = document.getElementById("toast-container");
+        if(!container) return;
         const toast = document.createElement("div");
 
-        toast.className = `bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-3 rounded-2xl shadow-xl shadow-${color}-500/20 border-r-4 border-${color}-500 flex items-center justify-between gap-3 transform -translate-y-10 opacity-0 transition-all duration-300 font-bold text-sm pointer-events-auto`;
+        toast.className = `bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-3 rounded-2xl shadow-xl shadow-${color}-500/20 border-r-4 border-${color}-500 flex items-center justify-between gap-3 transform -translate-y-10 opacity-0 transition-all duration-300 font-bold text-sm pointer-events-auto mb-2`;
         toast.innerHTML = `<div class="flex items-center gap-3"><i class='bx ${icon} text-2xl text-${color}-500'></i> <span>${message}</span></div>`;
 
         container.appendChild(toast);
