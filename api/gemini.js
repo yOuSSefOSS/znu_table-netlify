@@ -43,6 +43,10 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
+        if (data.error) {
+            return res.status(200).json({ reply: 'API Error: ' + (data.error.message || JSON.stringify(data.error)) });
+        }
+
         let aiReply = 'عذراً، لم أستطع معالجة طلبك حالياً.';
         if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
             aiReply = data.candidates[0].content.parts[0].text;
