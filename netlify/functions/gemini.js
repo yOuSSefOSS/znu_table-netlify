@@ -41,11 +41,16 @@ exports.handler = async function (event, context) {
         });
 
         const data = await response.json();
+        
+        let aiReply = "عذراً، لم أستطع معالجة طلبك حالياً.";
+        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+            aiReply = data.candidates[0].content.parts[0].text;
+        }
 
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ reply: aiReply })
         };
     } catch (error) {
         console.error("Function Error:", error);

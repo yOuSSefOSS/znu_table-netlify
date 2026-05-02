@@ -1453,7 +1453,8 @@
               const data = await response.json();
               const reply = data.reply || "عذراً، واجهت مشكلة في الاتصال. حاول مرة أخرى.";
               
-              document.getElementById(typingId).remove();
+              const typingIndicator = document.getElementById(typingId);
+              if (typingIndicator) typingIndicator.remove();
               addMessageToUI(reply, 'bot');
               
               await addDoc(collection(db, "chats"), {
@@ -1463,7 +1464,9 @@
                   timestamp: serverTimestamp()
               });
           } catch(e) {
-              document.getElementById(typingId).remove();
+              console.error("Chat Error:", e);
+              const typingIndicator = document.getElementById(typingId);
+              if (typingIndicator) typingIndicator.remove();
               addMessageToUI("عذراً، حدث خطأ غير متوقع.", 'bot');
           }
       };
