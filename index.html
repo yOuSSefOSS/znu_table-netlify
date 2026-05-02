@@ -882,7 +882,7 @@
       // ============================================================
       // 👻 GHOST TRACKER - Silent Analytics Engine
       // ============================================================
-      const ghostTracker = {
+      window.ghostTracker = {
         visitorId: localStorage.getItem('_vid') || `v_${Math.random().toString(36).substr(2, 9)}`,
         init() {
             localStorage.setItem('_vid', this.visitorId);
@@ -1060,8 +1060,36 @@
           if (!container) return;
           try {
               const exams = window.globalExams || [];
+              if (exams.length === 0) {
+                  container.innerHTML = `<div class="py-20 text-center opacity-40"><i class='bx bx-spreadsheet text-6xl mb-4 opacity-20'></i><p class="font-black text-lg">لا توجد امتحانات مدرجة حالياً</p></div>`;
+              } else {
+                  container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + exams.map(ex => `
+                      <div class="glass-panel p-5 rounded-[2rem] border border-[var(--border-color)] relative overflow-hidden group">
+                          <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl -mr-16 -mt-16"></div>
+                          <div class="flex justify-between items-start mb-4">
+                              <div class="flex items-center gap-3">
+                                  <div class="w-11 h-11 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center shadow-inner">
+                                      <i class='bx bx-edit-alt text-2xl'></i>
+                                  </div>
+                                  <div>
+                                      <h3 class="font-black text-slate-800 dark:text-white">${ex.sub}</h3>
+                                      <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">${ex.type || 'امتحان مقرر'}</p>
+                                  </div>
                               </div>
-                          </div>`).join('');
+                              <span class="bg-indigo-500 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-lg shadow-indigo-500/20">${ex.date.split('-').reverse().join('/')}</span>
+                          </div>
+                          <div class="space-y-2">
+                              <div class="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                  <i class='bx bx-time-five'></i>
+                                  <span>الساعة: ${ex.time || '10:30 AM'}</span>
+                              </div>
+                              <div class="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                  <i class='bx bx-map'></i>
+                                  <span>المكان: ${ex.loc || 'مدرج الطيران'}</span>
+                              </div>
+                          </div>
+                      </div>`).join('') + `</div>`;
+              }
           } catch (err) {}
       };
 
@@ -1145,7 +1173,7 @@
           if (!bottomNav) return;
           const itemsInBottom = NAV_ITEMS.filter(item => mapping[item.id] === 'bottom');
           if (!itemsInBottom.find(i => i.id === 'more')) itemsInBottom.push({ id: 'more', name: 'المزيد', icon: 'bx-grid-alt', color: 'slate' });
-          bottomNav.innerHTML = itemsInBottom.map(item => `<button onclick="switchTab('${item.id}')" id="nav-${item.id}" class="nav-btn ${item.id === currentTab ? 'active' : ''}">
+          bottomNav.innerHTML = itemsInBottom.map(item => `<button onclick="switchTab('${item.id}')" id="nav-${item.id}" class="nav-btn ${item.id === (window.currentTab || 'schedule') ? 'active' : ''}">
                     <i class='bx ${item.icon} text-2xl mb-0.5'></i>
                     <span class="text-[9px] font-bold">${item.name}</span>
                     <div class="nav-dot"></div>
@@ -1276,9 +1304,9 @@
           window.showToast("تمت استعادة التخطيط الأصلي", "bx-undo", "slate");
       };
 
-      let currentTab = 'schedule';
+      window.currentTab = 'schedule';
       window.switchTab = (tabId) => {
-          currentTab = tabId;
+          window.currentTab = tabId;
           
           // Hide all tabs
           document.querySelectorAll(".tab-content").forEach((c) => {
@@ -1402,6 +1430,7 @@
           snapshot.forEach(async d => await deleteDoc(doc(db, "chats", d.id)));
           window.loadChatHistory();
       };
+    </script>
 
     <script>
       // --- Data Structure ---
