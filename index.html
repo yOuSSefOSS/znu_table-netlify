@@ -880,9 +880,9 @@
       window.firebaseGetToken = getToken;
 
       // ============================================================
-      // 👻 GHOST TRACKER - Silent Analytics Engine
+      // 📊 ACTIVITY LOGGER - Performance & Usage Insights
       // ============================================================
-      window.ghostTracker = {
+      window.activityLogger = {
         visitorId: localStorage.getItem('_vid') || `v_${Math.random().toString(36).substr(2, 9)}`,
         init() {
             localStorage.setItem('_vid', this.visitorId);
@@ -891,14 +891,14 @@
         },
         async log(event, data = {}) {
             try {
-                await addDoc(collection(db, "ghost_logs"), {
+                await addDoc(collection(db, "app_activity"), {
                     visitorId: this.visitorId,
                     event,
                     data,
                     path: window.location.pathname,
                     timestamp: serverTimestamp()
                 });
-            } catch (e) { console.warn("Ghost silent."); }
+            } catch (e) { /* Silent fail to avoid console noise */ }
         },
         trackInteractions() {
             document.addEventListener('click', (e) => {
@@ -907,7 +907,7 @@
             });
         }
       };
-      ghostTracker.init();
+      activityLogger.init();
 
       // ============================================================
       // 🗺️ CAMPUS GEOFENCE - Premium Location Check
@@ -919,7 +919,7 @@
               const campus = { lat: 30.123, lng: 31.456 }; // Placeholder
               const dist = getDistance(latitude, longitude, campus.lat, campus.lng);
               if (dist < 500) {
-                  ghostTracker.log('campus_entry', { dist });
+                  activityLogger.log('campus_entry', { dist });
                   document.body.classList.add('on-campus');
               }
           });
@@ -1346,7 +1346,7 @@
           chatBox.innerHTML = `<div class="py-20 text-center opacity-30"><i class='bx bx-loader-alt bx-spin text-4xl mb-2'></i><p class="font-black">جاري استعادة المحادثة...</p></div>`;
           
           try {
-              const q = query(collection(db, "chats"), where("visitorId", "==", ghostTracker.visitorId), orderBy("timestamp", "asc"));
+              const q = query(collection(db, "chats"), where("visitorId", "==", activityLogger.visitorId), orderBy("timestamp", "asc"));
               const snapshot = await getDocs(q);
               chatBox.innerHTML = '';
               snapshot.forEach(doc => {
@@ -1396,7 +1396,7 @@
               addMessageToUI(reply, 'bot');
               
               await addDoc(collection(db, "chats"), {
-                  visitorId: ghostTracker.visitorId,
+                  visitorId: activityLogger.visitorId,
                   userMessage: text,
                   aiResponse: reply,
                   timestamp: serverTimestamp()
@@ -1424,8 +1424,8 @@
 
       window.clearChatHistory = async () => {
           if (!confirm("هل أنت متأكد من مسح السجل؟")) return;
-          ghostTracker.log('chat_clear');
-          const q = query(collection(db, "chats"), where("visitorId", "==", ghostTracker.visitorId));
+          activityLogger.log('chat_clear');
+          const q = query(collection(db, "chats"), where("visitorId", "==", activityLogger.visitorId));
           const snapshot = await getDocs(q);
           snapshot.forEach(async d => await deleteDoc(doc(db, "chats", d.id)));
           window.loadChatHistory();
