@@ -1284,7 +1284,7 @@
 
                   <!-- App Info -->
                   <div class="text-center opacity-40">
-                      <p class="text-[10px] font-black uppercase tracking-widest mb-1">ZNU Table v4.2</p>
+                      <p class="text-[10px] font-black uppercase tracking-widest mb-1">ZNU Table v4.1.2</p>
                       <p class="text-[9px] font-bold">Aviation Information Systems</p>
                   </div>
               </div>
@@ -1372,6 +1372,7 @@
               }
               chatBox.scrollTo(0, chatBox.scrollHeight);
           } catch(e) {
+              console.error("Chat Load Error:", e);
               chatBox.innerHTML = `<div class="p-8 text-center text-red-400 font-bold">فشل تحميل السجل.</div>`;
           }
       };
