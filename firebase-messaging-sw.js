@@ -61,7 +61,6 @@ self.addEventListener('fetch', (event) => {
 
     // Bypass Service Worker for Firebase services to avoid CORS/Upload issues
     if (url.hostname.includes('firebase') || url.hostname.includes('googleapis.com')) {
-        event.respondWith(fetch(event.request));
         return; 
     }
 
