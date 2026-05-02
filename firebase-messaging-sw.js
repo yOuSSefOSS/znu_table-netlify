@@ -59,6 +59,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
+    // Bypass Service Worker for Firebase services to avoid CORS/Upload issues
+    if (url.hostname.includes('firebase') || url.hostname.includes('googleapis.com')) {
+        return; 
+    }
+
     if (url.origin === location.origin || event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request)
@@ -100,6 +105,7 @@ self.addEventListener('fetch', (event) => {
                         return networkResponse;
                     }).catch(() => {
                         console.log('Failed to fetch offline resource:', event.request.url);
+                        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
                     });
                 })
         );

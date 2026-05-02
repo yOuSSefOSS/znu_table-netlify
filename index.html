@@ -1212,17 +1212,25 @@
                           <i class='bx bx-palette text-indigo-500'></i> طابع التطبيق
                       </h3>
                       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          <button onclick="setTheme('glass')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='glass'?'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
-                              <div class="w-full h-8 rounded-lg bg-gradient-to-r from-indigo-200 to-cyan-200"></div>
-                              <span class="text-xs font-black">Clean Glass</span>
+                          <button onclick="setTheme('indigo')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='indigo'?'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-indigo-500"></div>
+                              <span class="text-xs font-black">Indigo</span>
                           </button>
-                          <button onclick="setTheme('cockpit')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='cockpit'?'border-amber-500 bg-amber-50 dark:bg-amber-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
-                              <div class="w-full h-8 rounded-lg bg-gradient-to-r from-emerald-900 to-amber-900"></div>
-                              <span class="text-xs font-black">Aero Cockpit</span>
+                          <button onclick="setTheme('emerald')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='emerald'?'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-emerald-500"></div>
+                              <span class="text-xs font-black">Emerald</span>
                           </button>
-                          <button onclick="setTheme('cyber')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='cyber'?'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
-                              <div class="w-full h-8 rounded-lg bg-gradient-to-r from-blue-900 to-fuchsia-900"></div>
-                              <span class="text-xs font-black">Cyber Night</span>
+                          <button onclick="setTheme('amber')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='amber'?'border-amber-500 bg-amber-50 dark:bg-amber-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-amber-500"></div>
+                              <span class="text-xs font-black">Amber</span>
+                          </button>
+                          <button onclick="setTheme('rose')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='rose'?'border-rose-500 bg-rose-50 dark:bg-rose-900/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-rose-500"></div>
+                              <span class="text-xs font-black">Rose</span>
+                          </button>
+                          <button onclick="setTheme('glass')" class="theme-btn p-3 rounded-2xl border-2 ${currentTheme==='glass'?'border-slate-500 bg-slate-50 dark:bg-slate-800/30':'border-transparent bg-slate-50 dark:bg-slate-800'} transition flex flex-col items-center gap-2">
+                              <div class="w-full h-8 rounded-lg bg-slate-200 dark:bg-slate-700"></div>
+                              <span class="text-xs font-black">Glass</span>
                           </button>
                       </div>
                   </div>
@@ -1571,36 +1579,36 @@
 
       // --- Theme Engine ---
       const THEME_CONFIG = {
-        glass: {
-          label: "Glass",
+        indigo: {
+          label: "Flight Indigo",
           toastColor: "indigo",
           browserColor: "#4f46e5",
-          blobs: ["rgba(79, 70, 229, 0.30)", "rgba(6, 182, 212, 0.20)", "rgba(139, 92, 246, 0.20)"]
+          blobs: ["rgba(79, 70, 229, 0.3)", "rgba(129, 140, 248, 0.2)", "rgba(67, 56, 202, 0.2)"]
         },
-        cockpit: {
-          label: "Cockpit",
+        emerald: {
+          label: "Nature Emerald",
+          toastColor: "emerald",
+          browserColor: "#10b981",
+          blobs: ["rgba(16, 185, 129, 0.3)", "rgba(52, 211, 153, 0.2)", "rgba(5, 150, 105, 0.2)"]
+        },
+        amber: {
+          label: "Sunset Amber",
           toastColor: "amber",
           browserColor: "#f59e0b",
-          blobs: ["rgba(16, 185, 129, 0.22)", "rgba(245, 158, 11, 0.15)", "rgba(5, 150, 105, 0.16)"]
-        },
-        cyber: {
-          label: "Cyber",
-          toastColor: "blue",
-          browserColor: "#22d3ee",
-          blobs: ["rgba(34, 211, 238, 0.23)", "rgba(56, 189, 248, 0.14)", "rgba(168, 85, 247, 0.12)"]
-        },
-        pastel: {
-          label: "Pastel",
-          toastColor: "rose",
-          browserColor: "#ec4899",
-          blobs: ["rgba(236, 72, 153, 0.20)", "rgba(251, 113, 133, 0.15)", "rgba(244, 114, 182, 0.14)"]
+          blobs: ["rgba(245, 158, 11, 0.3)", "rgba(251, 191, 36, 0.2)", "rgba(180, 83, 9, 0.2)"]
         },
         rose: {
-          label: "Rose",
-          toastColor: "purple",
-          browserColor: "#8b5cf6",
-          blobs: ["rgba(139, 92, 246, 0.22)", "rgba(167, 139, 250, 0.15)", "rgba(99, 102, 241, 0.14)"]
+          label: "Bloom Rose",
+          toastColor: "rose",
+          browserColor: "#f43f5e",
+          blobs: ["rgba(244, 63, 94, 0.3)", "rgba(251, 113, 133, 0.2)", "rgba(190, 18, 60, 0.2)"]
         },
+        glass: {
+          label: "Clear Glass",
+          toastColor: "slate",
+          browserColor: "#475569",
+          blobs: ["rgba(148, 163, 184, 0.2)", "rgba(203, 213, 225, 0.1)", "rgba(100, 116, 139, 0.1)"]
+        }
       };
 
       function applyBrowserThemeColor(hexColor) {
@@ -1617,11 +1625,11 @@
 
         // Remove all previous theme classes
         document.body.classList.remove(
-          "theme-glass",
-          "theme-cockpit",
-          "theme-cyber",
-          "theme-pastel",
+          "theme-indigo",
+          "theme-emerald",
+          "theme-amber",
           "theme-rose",
+          "theme-glass",
         );
 
         // Add new theme class
@@ -1649,11 +1657,11 @@
         container.innerHTML = '';
         
         const emojiSets = {
-            cockpit: ['✈️', '🛫', '🛰️', '🚁', '🚀', '📡'],
-            glass: ['✨', '💎', '❄️', '☁️', '🫧', '🪄'],
-            cyber: ['🤖', '👾', '🚀', '🌌', '⚡', '🛸'],
-            pastel: ['🍓', '🎀', '🍭', '🍓', '🎀', '🍭'],
-            rose: ['💜', '✨', '🌙', '🦄', '🍭', '💜']
+            indigo: ['✈️', '🛫', '🛰️', '🚁', '🚀', '📡'],
+            emerald: ['🌿', '🍃', '🌳', '🌲', '🍀', '🍏'],
+            amber: ['☀️', '🌅', '🏜️', '🔥', '🍊', '🌄'],
+            rose: ['🌸', '🌺', '🌷', '🌹', '🍓', '🎀'],
+            glass: ['✨', '💎', '❄️', '☁️', '🫧', '🪄']
         };
 
         const set = emojiSets[themeName] || emojiSets.glass;
