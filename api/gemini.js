@@ -21,8 +21,13 @@ export default async function handler(req, res) {
         - Schedule: ${JSON.stringify(ctx.schedule || [])}
         - Exams: ${JSON.stringify(ctx.exams || [])}
         - Announcements: ${JSON.stringify(ctx.announcements || [])}
+        - Uploaded Files / Resources (الملفات المرفوعة والمصادر): ${JSON.stringify(ctx.materials || [])}
         
         Use this data to answer accurately. Answer in Arabic (the user's language).
+        If the user asks for materials, links, files, or resources (e.g., "drive link for OS", "what materials uploaded"), analyze the 'Uploaded Files / Resources' context. 
+        - Be smart about matching subject names (e.g., "OS" matches "نظم التشغيل", "IS" matches "نظم معلومات", etc.).
+        - Provide the link from the context even if the user asks for a "Google Drive link" and the actual URL isn't from Google Drive.
+        - Provide the clickable HTML link using the format <a href="URL" target="_blank" class="text-indigo-500 dark:text-indigo-400 font-black underline">Text</a>.
         
         User Query: ${prompt}`;
 
