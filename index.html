@@ -1190,18 +1190,31 @@
           const subject = document.getElementById('sub-subject').value;
           const type = document.getElementById('sub-type').value;
           const vid = localStorage.getItem('_vid') || 'anon';
-          if(!title) return alert("يرجى إدخال العنوان");
+          const btn = document.getElementById('sub-btn');
+          if(!title) return alert('يرجى إدخال العنوان');
+          btn.disabled = true;
+          btn.textContent = 'جاري الرفع...';
           try {
               let url = '';
-              if(type !== 'link') {
+              if(type === 'link') {
+                  url = document.getElementById('sub-url').value.trim();
+                  if(!url) { btn.disabled = false; btn.textContent = 'نشر المحتوى 🚀'; return alert('يرجى إدخال الرابط'); }
+              } else {
                   const file = document.getElementById('sub-file').files[0];
+                  if(!file) { btn.disabled = false; btn.textContent = 'نشر المحتوى 🚀'; return alert('يرجى اختيار ملف أولاً'); }
                   const sRef = window.storageRef(window.firebaseStorage, `user_submissions/${vid}/${Date.now()}_${file.name}`);
                   const result = await window.uploadBytes(sRef, file);
                   url = await window.getDownloadURL(result.ref);
-              } else url = document.getElementById('sub-url').value;
+              }
               await addDoc(collection(db, "materials"), { title, subject, type, url, visitorId: vid, status: 'pending', createdAt: serverTimestamp() });
               closeSubmissionModal();
-          } catch(e) { alert("حدث خطأ أثناء الرفع"); }
+              alert('تم إرسال محتواك بنجاح! سيظهر للجميع بعد موافقة المشرف. شكراً لمساهمتك ❤️');
+          } catch(e) { 
+              console.error('خطأ الرفع:', e);
+              btn.disabled = false;
+              btn.textContent = 'نشر المحتوى 🚀';
+              alert('حدث خطأ أثناء الرفع. جرب استخدام خيار "رابط" بدلاً من رفع الملف مباشرة.');
+          }
       };
 
       const NAV_ITEMS = [
@@ -1451,23 +1464,28 @@
                   })
               });
               const data = await response.json();
-              const reply = data.reply || "عذراً، واجهت مشكلة في الاتصال. حاول مرة أخرى.";
+              const reply = data.reply || "عذراً، لم أستطع استقبال رد من الذكاء الاصطناعي.";
               
               const typingIndicator = document.getElementById(typingId);
               if (typingIndicator) typingIndicator.remove();
               addMessageToUI(reply, 'bot');
               
-              await addDoc(collection(db, "chats"), {
-                  visitorId: activityLogger.visitorId,
-                  userMessage: text,
-                  aiResponse: reply,
-                  timestamp: serverTimestamp()
-              });
+              // Save to Firestore separately — failure here should NOT affect the user's chat experience
+              try {
+                  await addDoc(collection(db, "chats"), {
+                      visitorId: activityLogger.visitorId,
+                      userMessage: text,
+                      aiResponse: reply,
+                      timestamp: serverTimestamp()
+                  });
+              } catch(saveErr) {
+                  console.warn("تحذير: لم يتم حفظ المحادثة في قاعدة البيانات.", saveErr);
+              }
           } catch(e) {
               console.error("Chat Error:", e);
               const typingIndicator = document.getElementById(typingId);
               if (typingIndicator) typingIndicator.remove();
-              addMessageToUI("عذراً، حدث خطأ غير متوقع.", 'bot');
+              addMessageToUI("عذراً، حدث خطأ غير متوقع. تحقق من اتصال الإنترنت.", 'bot');
           }
       };
 
