@@ -16,6 +16,19 @@ exports.handler = async function (event, context) {
             return { statusCode: 500, body: JSON.stringify({ error: "API key is not configured" }) };
         }
 
+        const context = body.context || {};
+        
+        let systemPrompt = `You are an AI Academic Assistant for ZNUTable. 
+        Context provided:
+        - Schedule: ${JSON.stringify(context.schedule || [])}
+        - Exams: ${JSON.stringify(context.exams || [])}
+        - Announcements: ${JSON.stringify(context.announcements || [])}
+        
+        Use this data to answer accurately. If asked about something not in the data, use your general knowledge but prioritize these tables.
+        Answer in Arabic (the user's language).
+        
+        User Query: ${prompt}`;
+
         const modelId = "gemini-flash-latest";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
 
@@ -23,7 +36,7 @@ exports.handler = async function (event, context) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{ parts: [{ text: systemPrompt }] }]
             })
         });
 
