@@ -913,6 +913,8 @@
       // 🗺️ CAMPUS GEOFENCE - Premium Location Check
       // ============================================================
       async function runGeofenceCheck() {
+          return; // Temporarily disabled
+          /*
           if (!navigator.geolocation) return;
           navigator.geolocation.getCurrentPosition(async (pos) => {
               const { latitude, longitude } = pos.coords;
@@ -923,6 +925,7 @@
                   document.body.classList.add('on-campus');
               }
           });
+          */
       }
       function getDistance(lat1, lon1, lat2, lon2) {
           const R = 6371e3;
