@@ -1155,65 +1155,85 @@
       function materialsDate(timestamp) { if (!timestamp) return ''; const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp); return date.toLocaleDateString('ar-EG'); }
 
       window.openSubmissionModal = () => {
-          const vid = localStorage.getItem('_vid') || 'anon';
+          const subjects = [...new Set((window.rawSchedule || []).map(s => s.sub).filter(Boolean))];
           const overlay = document.createElement('div');
           overlay.id = 'submission-modal-overlay';
-          overlay.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4';
+          overlay.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-end justify-center p-4';
           overlay.onclick = (e) => { if(e.target === overlay) closeSubmissionModal(); };
-          const subjects = [...new Set((window.rawSchedule || []).map(s => s.sub))];
-          overlay.innerHTML = `<div class="bg-white w-full max-w-lg rounded-[2.5rem] p-6 shadow-2xl animate-slide-up">
-                  <h3 class="font-black text-lg mb-4">مشاركة ملف / ملاحظات ✍️</h3>
-                  <select id="sub-subject" class="w-full p-4 mb-3 border rounded-2xl">${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}</select>
-                  <input type="text" id="sub-title" placeholder="عنوان الملف" class="w-full p-4 mb-3 border rounded-2xl">
-                  <select id="sub-type" onchange="toggleSubType()" class="w-full p-4 mb-3 border rounded-2xl">
-                      <option value="pdf">ملف PDF 📄</option>
-                      <option value="image">صورة / لقطة شاشة 🖼️</option>
-                      <option value="link">رابط 🔗</option>
+          overlay.innerHTML = `
+              <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] p-6 shadow-2xl mb-4 border border-slate-200 dark:border-slate-700">
+                  <div class="flex items-center justify-between mb-5">
+                      <h3 class="font-black text-lg text-slate-800 dark:text-white">مشاركة ملف / ملاحظات ✍️</h3>
+                      <button onclick="closeSubmissionModal()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><i class='bx bx-x text-xl'></i></button>
+                  </div>
+
+                  <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 mb-4 text-sm">
+                      <p class="font-black text-blue-700 dark:text-blue-300 mb-2">📋 كيف تحصل على رابط Google Drive؟</p>
+                      <ol class="text-blue-600 dark:text-blue-400 font-bold space-y-1 text-xs list-decimal list-inside">
+                          <li>ارفع ملفك على Google Drive</li>
+                          <li>انقر بزر يمين على الملف → "مشاركة"</li>
+                          <li>غير الصلاحية إلى "أي شخص لديه الرابط"</li>
+                          <li>انسخ الرابط والصقه هنا ⬇️</li>
+                      </ol>
+                  </div>
+
+                  <select id="sub-subject" class="w-full p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 outline-none">
+                      ${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}
                   </select>
-                  <input type="file" id="sub-file" accept=".pdf,image/*" class="hidden" onchange="updateFileLabel(this)">
-                  <button onclick="document.getElementById('sub-file').click()" class="w-full p-4 mb-3 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-500 font-bold">
-                      <i class='bx bx-upload'></i>
-                      <span id="file-name-label">اختر الملف (PDF أو صورة)</span>
+
+                  <input type="text" id="sub-title" placeholder="عنوان الملف (مثال: محاضرة 3 - نظم التشغيل)" class="w-full p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-400">
+
+                  <select id="sub-type" class="w-full p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 outline-none">
+                      <option value="pdf">ملف PDF 📄</option>
+                      <option value="link">رابط يوتيوب / خارجي 🔗</option>
+                      <option value="image">صورة / ملاحظات 🖼️</option>
+                  </select>
+
+                  <input type="url" id="sub-url" placeholder="https://drive.google.com/file/..." class="w-full p-4 mb-4 border-2 border-indigo-300 dark:border-indigo-700 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500">
+
+                  <button onclick="submitResource()" id="sub-btn" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                      <i class='bx bx-send'></i> نشر المحتوى 🚀
                   </button>
-                  <input type="url" id="sub-url" placeholder="الرابط" class="w-full p-4 mb-3 border rounded-2xl hidden">
-                  <button onclick="submitResource()" id="sub-btn" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl">نشر المحتوى 🚀</button>
+                  <p class="text-center text-xs font-bold text-slate-400 mt-3">سيظهر للجميع بعد مراجعة المشرف ✅</p>
               </div>`;
           document.body.appendChild(overlay);
       };
 
       window.closeSubmissionModal = () => { const m = document.getElementById('submission-modal-overlay'); if(m) m.remove(); };
-      window.toggleSubType = () => { const type = document.getElementById('sub-type').value; document.getElementById('sub-url').classList.toggle('hidden', type !== 'link'); };
-      window.updateFileLabel = (input) => { const label = document.getElementById('file-name-label'); if(label) label.innerText = input.files[0]?.name || ''; };
 
       window.submitResource = async () => {
-          const title = document.getElementById('sub-title').value.trim();
-          const subject = document.getElementById('sub-subject').value;
-          const type = document.getElementById('sub-type').value;
-          const vid = localStorage.getItem('_vid') || 'anon';
+          const title = document.getElementById('sub-title')?.value.trim();
+          const subject = document.getElementById('sub-subject')?.value;
+          const type = document.getElementById('sub-type')?.value;
+          const url = document.getElementById('sub-url')?.value.trim();
           const btn = document.getElementById('sub-btn');
-          if(!title) return alert('يرجى إدخال العنوان');
+          const vid = localStorage.getItem('_vid') || 'anon';
+
+          if(!title) return alert('يرجى إدخال عنوان الملف');
+          if(!url || !url.startsWith('http')) return alert('يرجى إدخال رابط صحيح يبدأ بـ https://');
+
           btn.disabled = true;
-          btn.textContent = 'جاري الرفع...';
+          btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> جاري الإرسال...`;
+
           try {
-              let url = '';
-              if(type === 'link') {
-                  url = document.getElementById('sub-url').value.trim();
-                  if(!url) { btn.disabled = false; btn.textContent = 'نشر المحتوى 🚀'; return alert('يرجى إدخال الرابط'); }
-              } else {
-                  const file = document.getElementById('sub-file').files[0];
-                  if(!file) { btn.disabled = false; btn.textContent = 'نشر المحتوى 🚀'; return alert('يرجى اختيار ملف أولاً'); }
-                  const sRef = window.storageRef(window.firebaseStorage, `user_submissions/${vid}/${Date.now()}_${file.name}`);
-                  const result = await window.uploadBytes(sRef, file);
-                  url = await window.getDownloadURL(result.ref);
-              }
-              await addDoc(collection(db, "materials"), { title, subject, type, url, visitorId: vid, status: 'pending', createdAt: serverTimestamp() });
+              await addDoc(collection(db, "materials"), {
+                  title, subject, type, url,
+                  visitorId: vid,
+                  status: 'pending',
+                  createdAt: serverTimestamp()
+              });
               closeSubmissionModal();
-              alert('تم إرسال محتواك بنجاح! سيظهر للجميع بعد موافقة المشرف. شكراً لمساهمتك ❤️');
-          } catch(e) { 
-              console.error('خطأ الرفع:', e);
+              // Show success toast
+              const toast = document.createElement('div');
+              toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-black px-6 py-3 rounded-2xl shadow-xl z-[200] flex items-center gap-2 animate-fade-in';
+              toast.innerHTML = `<i class='bx bx-check-circle text-xl'></i> تم الإرسال! شكراً لمساهمتك ❤️`;
+              document.body.appendChild(toast);
+              setTimeout(() => toast.remove(), 4000);
+          } catch(e) {
+              console.error('Submit error:', e);
               btn.disabled = false;
-              btn.textContent = 'نشر المحتوى 🚀';
-              alert('حدث خطأ أثناء الرفع. جرب استخدام خيار "رابط" بدلاً من رفع الملف مباشرة.');
+              btn.innerHTML = `<i class='bx bx-send'></i> نشر المحتوى 🚀`;
+              alert('حدث خطأ. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.');
           }
       };
 
@@ -1344,7 +1364,7 @@
 
                   <!-- App Info -->
                   <div class="text-center opacity-40">
-                      <p class="text-[10px] font-black uppercase tracking-widest mb-1">ZNU Table v4.1.4</p>
+                      <p class="text-[10px] font-black uppercase tracking-widest mb-1">ZNU Table v4.2.0</p>
                       <p class="text-[9px] font-bold">Aviation Information Systems</p>
                   </div>
               </div>
