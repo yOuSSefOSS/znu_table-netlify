@@ -1430,6 +1430,10 @@
           snapshot.forEach(async d => await deleteDoc(doc(db, "chats", d.id)));
           window.loadChatHistory();
       };
+
+      // --- Start Application ---
+      fetchSchedule();
+      setupLiveListeners();
     </script>
 
     <script>
