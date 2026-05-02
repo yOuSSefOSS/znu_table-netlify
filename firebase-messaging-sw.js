@@ -64,8 +64,10 @@ self.addEventListener('fetch', (event) => {
             fetch(event.request)
                 .then((response) => {
                     if (response && response.status === 200) {
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+                        if (event.request.method === 'GET') {
+                            const responseClone = response.clone();
+                            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+                        }
                     }
                     return response;
                 })
@@ -89,10 +91,12 @@ self.addEventListener('fetch', (event) => {
                         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors') {
                             return networkResponse;
                         }
-                        const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
+                        if (event.request.method === 'GET') {
+                            const responseToCache = networkResponse.clone();
+                            caches.open(CACHE_NAME).then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            });
+                        }
                         return networkResponse;
                     }).catch(() => {
                         console.log('Failed to fetch offline resource:', event.request.url);

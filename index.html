@@ -10,6 +10,7 @@
 
     <!-- PWA Setup tags -->
     <link rel="manifest" href="manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
@@ -1693,6 +1694,8 @@
 
             if (isActive) {
               classFoundActive = true;
+              const totalDur = pInfo.end - pInfo.start;
+              const elapsed = currentHour - pInfo.start;
               const pct = Math.min(
                 100,
                 Math.max(0, (elapsed / totalDur) * 100),
@@ -1812,13 +1815,8 @@
             if (progressText) progressText.innerText = 'بانتظار البدء';
 
           } else {
-            document
-              .getElementById("current-class-banner")
-              .classList.add("hidden");
+            document.getElementById("current-class-banner").classList.add("hidden");
           }
-          document
-            .getElementById("current-class-banner")
-            .classList.add("hidden");
         }
 
         // Handle "Up Next" Info for Widget
