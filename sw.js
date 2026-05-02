@@ -1,4 +1,4 @@
-const CACHE_NAME = 'timetable-v4';
+const CACHE_NAME = 'timetable-v4.1';
 const ASSETS_TO_CACHE = [
     './index.html',
     './manifest.json',
@@ -40,6 +40,11 @@ self.addEventListener('activate', (event) => {
 // Network-first for external CDNs (fonts/icons) falling back to cache if offline
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
+
+    // Bypass Service Worker for Firebase/Google APIs to avoid CORS/Upload issues
+    if (url.hostname.includes('firebase') || url.hostname.includes('googleapis.com')) {
+        return; 
+    }
 
     // For our core files, try the network first to get updates, fallback to cache if offline
     if (url.origin === location.origin || event.request.mode === 'navigate') {

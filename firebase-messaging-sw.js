@@ -24,7 +24,7 @@ messaging.onBackgroundMessage((payload) => {
 // ==========================================
 // PWA OFFLINE CACHING LOGIC (From original sw.js)
 // ==========================================
-const CACHE_NAME = 'timetable-v4';
+const CACHE_NAME = 'timetable-v4.1';
 const ASSETS_TO_CACHE = [
     './index.html',
     './manifest.json'
