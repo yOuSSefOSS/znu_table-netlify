@@ -1446,12 +1446,20 @@
               snapshot.forEach(doc => messages.push({ id: doc.id, ...doc.data() }));
               messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
 
+              window.chatSession = [];
+
               messages.forEach(data => {
+                  window.chatSession.push({ role: 'user', content: data.userMessage });
+                  window.chatSession.push({ role: 'model', content: data.aiResponse });
                   addMessageToUI(data.userMessage, 'user');
                   addMessageToUI(data.aiResponse, 'bot');
               });
               if (snapshot.empty) {
                   addMessageToUI("مرحباً بك! أنا مساعدك الذكي 🤖. كيف يمكنني مساعدتك اليوم بخصوص الجدول أو المواد الدراسية؟", 'bot');
+              }
+              
+              if (window.chatSession.length > 6) {
+                  window.chatSession = window.chatSession.slice(-6);
               }
               chatBox.scrollTo(0, chatBox.scrollHeight);
           } catch(e) {
@@ -1467,6 +1475,7 @@
 
           input.value = '';
           addMessageToUI(text, 'user');
+          if (!window.chatSession) window.chatSession = [];
           
           const typingId = 'bot-typing-' + Date.now();
           const chatBox = document.getElementById('chat-messages');
@@ -1479,6 +1488,7 @@
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
                       prompt: text,
+                      history: window.chatSession.slice(-6),
                       context: {
                           schedule: window.rawSchedule || [],
                           announcements: window.globalAnnouncements || [],
@@ -1493,6 +1503,12 @@
               const typingIndicator = document.getElementById(typingId);
               if (typingIndicator) typingIndicator.remove();
               addMessageToUI(reply, 'bot');
+              
+              window.chatSession.push({ role: 'user', content: text });
+              window.chatSession.push({ role: 'model', content: reply });
+              if (window.chatSession.length > 6) {
+                  window.chatSession = window.chatSession.slice(-6);
+              }
               
               // Save to Firestore separately — failure here should NOT affect the user's chat experience
               try {
@@ -1517,10 +1533,19 @@
           const chatBox = document.getElementById('chat-messages');
           if (!chatBox) return;
           const isBot = sender === 'bot';
+          
+          let parsedText = text;
+          if (isBot) {
+              // Parse bold text
+              parsedText = parsedText.replace(/\*\*(.*?)\*\*/g, '<span class="font-black">$1</span>');
+              // Parse links [text](url)
+              parsedText = parsedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-indigo-500 dark:text-indigo-400 font-black underline hover:text-indigo-600 transition-colors inline-flex items-center gap-1"><i class="bx bx-link text-xs"></i> $1</a>');
+          }
+
           const html = `
               <div class="flex ${isBot ? 'justify-start' : 'justify-end'} mb-4 animate-slide-up">
                   <div class="${isBot ? 'bg-white/80 dark:bg-slate-800/80 rounded-tr-none' : 'bg-indigo-600 text-white rounded-tl-none'} backdrop-blur-md p-4 rounded-[1.5rem] shadow-sm max-w-[85%]">
-                      <p class="text-sm font-bold leading-relaxed whitespace-pre-wrap">${text}</p>
+                      <p class="text-sm font-bold leading-relaxed whitespace-pre-wrap">${parsedText}</p>
                   </div>
               </div>
           `;
@@ -1534,6 +1559,7 @@
           const q = query(collection(db, "chats"), where("visitorId", "==", activityLogger.visitorId));
           const snapshot = await getDocs(q);
           snapshot.forEach(async d => await deleteDoc(doc(db, "chats", d.id)));
+          window.chatSession = [];
           window.loadChatHistory();
       };
 

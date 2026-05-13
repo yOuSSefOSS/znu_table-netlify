@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { prompt, context } = req.body;
+        const { prompt, context, history = [] } = req.body;
 
         if (!prompt) {
             return res.status(400).json({ error: 'Missing prompt' });
@@ -28,23 +28,29 @@ export default async function handler(req, res) {
         const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
         const currentDateTime = `${dayNames[now.getDay()]} ${now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })} - الساعة ${now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
 
-        const systemPrompt = `You are an AI Academic Assistant for ZNUTable.
-        TODAY'S DATE AND TIME (use this — do NOT guess the date): ${currentDateTime}
-        
-        Context provided:
-        - Schedule: ${JSON.stringify(compact(ctx.schedule))}
-        - Exams: ${JSON.stringify(compact(ctx.exams))}
-        - Announcements: ${JSON.stringify(compact(ctx.announcements))}
-        - Uploaded Files / Resources (الملفات المرفوعة والمصادر): ${JSON.stringify(compact(ctx.materials))}
-        
-        Use this data to answer accurately. Answer in Arabic (the user's language).
-        When answering questions about what we have today, tomorrow, or the current day of the week, always use the TODAY'S DATE AND TIME provided above — never assume or guess.
-        If the user asks for materials, links, files, or resources (e.g., "drive link for OS", "what materials uploaded"), analyze the 'Uploaded Files / Resources' context. 
-        - Be smart about matching subject names (e.g., "OS" matches "نظم التشغيل", "IS" matches "نظم معلومات", etc.).
-        - Provide the link from the context even if the user asks for a "Google Drive link" and the actual URL isn't from Google Drive.
-        - Provide the clickable HTML link using the format <a href="URL" target="_blank" class="text-indigo-500 dark:text-indigo-400 font-black underline">Text</a>.
-        
-        User Query: ${prompt}`;
+        const systemPrompt = `أنت زميل أكبر (Senior Student) ذكي، لطيف، ومتعاون لطلاب كلية الزرقاء الجامعية في تخصص نظم معلومات الطيران.
+اسمك هو "الجدول الذكي".
+تحدث مع الطلاب بطريقة ودودة، أكاديمية، ومحفزة. استخدم الرموز التعبيرية (Emojis) بشكل مناسب لتلطيف الجو.
+يفضل استخدام النقاط (Bullet points) والإجابات المختصرة والواضحة.
+تجنب الردود الطويلة والمملة. 
+مهم جداً: إذا طلب الطالب رابطاً أو ملفاً، استخدم صيغة الماركداون (Markdown) للروابط بهذا الشكل: [اسم المادة](الرابط)، ولا تستخدم وسوم HTML إطلاقاً.
+
+التاريخ والوقت الحالي للخادم (TODAY'S DATE AND TIME): ${currentDateTime}
+استخدم هذا التاريخ والوقت دائماً عند الإجابة على الأسئلة المتعلقة بـ "اليوم"، "غداً"، أو الأيام النسبية. لا تخمن أبداً.
+
+البيانات الحالية للجدول والإعلانات والمواد:
+- Schedule: ${JSON.stringify(compact(ctx.schedule))}
+- Exams: ${JSON.stringify(compact(ctx.exams))}
+- Announcements: ${JSON.stringify(compact(ctx.announcements))}
+- Uploaded Files / Resources (الملفات المرفوعة والمصادر): ${JSON.stringify(compact(ctx.materials))}
+
+استخدم البيانات أعلاه للإجابة. عند البحث عن مواد استخدم ذكاءك في مطابقة أسماء المواد (مثلاً OS تعني نظم تشغيل). قم بتقديم الرابط الموجود في البيانات.`;
+
+        // Format history to Gemini contents structure
+        const formattedHistory = history.map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+        }));
 
         // gemini-2.0-flash-lite: free-tier compatible, fast, Gemini 2.0 generation
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
@@ -53,7 +59,13 @@ export default async function handler(req, res) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                contents: [
+                    ...formattedHistory,
+                    { role: "user", parts: [{ text: prompt }] }
+                ],
                 generationConfig: {
                     maxOutputTokens: 700,  // caps reply length → saves output tokens
                     temperature: 0.5       // less random = more focused = shorter answers
