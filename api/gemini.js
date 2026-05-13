@@ -63,12 +63,17 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        let aiReply = 'عذراً، لم أستطع معالجة طلبك حالياً. قد يكون هناك ضغط على الخدمة، يرجى المحاولة بعد دقيقة.';
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            aiReply = data.candidates[0].content.parts[0].text;
-        } else if (data.error) {
-            console.error('Gemini API Error:', data.error);
+        // If the Gemini API returned an error, log details and fail fast
+        if (data.error) {
+            console.error(`Gemini API Error [HTTP ${response.status}]:`, JSON.stringify(data.error));
+            return res.status(502).json({
+                reply: 'عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى.',
+                debug: data.error.message  // visible in response during development
+            });
         }
+
+        const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text
+            || 'عذراً، لم أتلقَّ ردًا من الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.';
 
         return res.status(200).json({ reply: aiReply });
     } catch (error) {
