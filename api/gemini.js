@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         - Uploaded Files / Resources (الملفات المرفوعة والمصادر): ${JSON.stringify(compact(ctx.materials))}
         
         Use this data to answer accurately. Answer in Arabic (the user's language).
-        When answering questions about today, tomorrow, or the current day of the week, always use the TODAY'S DATE AND TIME provided above — never assume or guess.
+        When answering questions about what we have today, tomorrow, or the current day of the week, always use the TODAY'S DATE AND TIME provided above — never assume or guess.
         If the user asks for materials, links, files, or resources (e.g., "drive link for OS", "what materials uploaded"), analyze the 'Uploaded Files / Resources' context. 
         - Be smart about matching subject names (e.g., "OS" matches "نظم التشغيل", "IS" matches "نظم معلومات", etc.).
         - Provide the link from the context even if the user asks for a "Google Drive link" and the actual URL isn't from Google Drive.
