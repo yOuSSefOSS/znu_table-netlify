@@ -52,8 +52,8 @@ export default async function handler(req, res) {
             parts: [{ text: msg.content }]
         }));
 
-        // gemini-2.0-flash-lite: free-tier compatible, fast, Gemini 2.0 generation
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
+        // gemini-2.5-flash-lite: free-tier compatible, fast, generation
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
